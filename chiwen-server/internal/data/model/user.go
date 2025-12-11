@@ -1,21 +1,24 @@
 package model
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type User struct {
-	ID           uint       `gorm:"primarykey" json:"id"`
-	Username     string     `gorm:"unique;size:64;not null" json:"username"`
-	PasswordHash string     `gorm:"column:password_hash;size:255;not null" json:"-"` // 隐藏返回
-	Name         string     `gorm:"size:64" json:"name"`
-	Email        string     `gorm:"size:128" json:"email"`
-	Phone        string     `gorm:"size:32" json:"phone"`
-	IsActive     bool       `gorm:"default:true" json:"is_active"`
-	IsAdmin      bool       `gorm:"default:false" json:"is_admin"`
-	LdapDN       string     `gorm:"column:ldap_dn;size:255" json:"ldap_dn"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
-	LastLoginAt  *time.Time `json:"last_login_at"`
-	LastLoginIP  string     `gorm:"size:45" json:"last_login_ip"`
+	ID           uint           `gorm:"primarykey" db:"id" json:"id"`
+	Username     string         `gorm:"unique;size:64;not null" db:"username" json:"username"`
+	PasswordHash string         `gorm:"column:password_hash;size:255;not null" db:"password_hash" json:"-"` // 隐藏返回
+	Name         sql.NullString `gorm:"size:64" db:"name" json:"name"`
+	Email        sql.NullString `gorm:"size:128" db:"email" json:"email"`
+	Phone        sql.NullString `gorm:"size:32" db:"phone" json:"phone"`
+	IsActive     bool           `gorm:"default:true" db:"is_active" json:"is_active"`
+	IsAdmin      bool           `gorm:"default:false" db:"is_admin" json:"is_admin"`
+	LdapDN       sql.NullString `gorm:"column:ldap_dn;size:255" db:"ldap_dn" json:"ldap_dn"`
+	CreatedAt    time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt    time.Time      `db:"updated_at" json:"updated_at"`
+	LastLoginAt  *time.Time     `db:"last_login_at" json:"last_login_at"`
+	LastLoginIP  sql.NullString `gorm:"size:45" db:"last_login_ip" json:"last_login_ip"`
 }
 
 func (User) TableName() string {

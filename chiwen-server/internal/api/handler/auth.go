@@ -38,7 +38,10 @@ func Login(c *gin.Context) {
 
 	err := mysql.DB().Get(&user, query, req.Username)
 	if err != nil {
-		logrus.WithField("username", req.Username).Warn("登录失败：用户不存在或被禁用")
+		logrus.WithFields(logrus.Fields{
+			"username": req.Username,
+			"error":    err.Error(),
+		}).Warn("登录失败：用户不存在或被禁用")
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "用户名或密码错误"})
 		return
 	}
