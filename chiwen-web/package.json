@@ -16,7 +16,9 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "bcryptjs": "^3.0.3",
+    "element-plus": "^2.12.0",
     "lucide-vue-next": "^0.559.0",
     "naive-ui": "^2.43.2",
     "pinia": "^3.0.4",
@@ -33,6 +35,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-vue": "~10.5.1",
     "jiti": "^2.6.1",
+    "less": "^4.4.2",
     "npm-run-all2": "^8.0.4",
     "prettier": "3.6.2",
     "typescript": "~5.9.0",
