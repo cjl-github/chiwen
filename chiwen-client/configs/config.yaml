@@ -1,0 +1,38 @@
+app:
+  name: "chiwen_server"
+  # mode: "release"
+  mode: "debug"
+  listen: 7090
+
+# 客户端要注册的服务器配置
+client:
+  data_dir: "~/.ssh"             # 数据存储目录
+  key_file: "client_key.pem"     # 密钥文件名
+  public_key_file: "client_key.pem.pub" # 公钥文件名
+  uuid_file: "client_id"         # UUID存储文件
+  agent_secret_file: "agent_secret_key"
+  heartbeat_interval: 30
+  # 新增：Agent 长连接配置
+  ws_reconnect_interval: 5      # 重连间隔秒数
+  ws_ping_interval: 20        # 每20秒发一次 ping
+  ws_url: ""                    # 如果为空则自动拼接 server.host + /api/v1/agent/tty/agent/ws
+
+# 服务器配置
+server:
+    host: "192.168.19.100"              # 服务器主机名或IP地址
+    port: 8090                          # 服务器端口
+    protocol: "http"                    # 协议：http 或 https
+    register_path: "/api/v1/register"   # 注册接口路径
+    register_status_path: "/api/v1/register/status"
+    heartbeat_path: "/api/v1/heartbeat" # 心跳接口路径
+    timeout: 30                         # 请求超时时间（秒）
+
+log:
+  level: "info"
+  filename: ""
+  max_size: 200
+  max_age: 7
+  max_backups: 3
+
+
+  
