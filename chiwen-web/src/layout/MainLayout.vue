@@ -1,153 +1,154 @@
-<!-- src/layout/MainLayout.vue （完美修复版，已亲自验证可运行）-->
 <template>
-  <el-container class="main-layout">
-    <!-- 左侧菜单 -->
-    <el-aside width="220px">
-      <div class="logo">
-        <h2>螭吻</h2>
+  <div id="main-layout">
+    <!-- 顶部栏 -->
+    <header class="header">
+      <h1>迟文系统</h1>
+      <div class="top-right">
+        <span>{{ authStore.user?.name || '管理员' }}</span>
+        <button @click="logout" class="logout-btn">退出登录</button>
       </div>
-      <el-menu
-        :default-active="activeMenu"
-        background-color="#191a23"
-        text-color="#fff"
-        active-text-color="#409eff"
-        router
-      >
-        <el-menu-item index="/dashboard">
-          <el-icon><HomeFilled /></el-icon>
-          <span>首页看板</span>
-        </el-menu-item>
+    </header>
 
-        <el-menu-item index="/assets">
-          <el-icon><Monitor /></el-icon>
-          <span>资产管理</span>
-        </el-menu-item>
-
-        <el-menu-item index="/sessions">
-          <el-icon><Link /></el-icon>
-          <span>会话管理</span>
-        </el-menu-item>
-
-        <el-menu-item index="/audit">
-          <el-icon><Document /></el-icon>
-          <span>操作审计</span>
-        </el-menu-item>
-
-        <el-sub-menu index="settings">
-          <template #title>
-            <el-icon><Setting /></el-icon>
-            <span>系统设置</span>
-          </template>
-          <el-menu-item index="/settings/users">用户管理</el-menu-item>
-          <el-menu-item index="/settings/profile">个人中心</el-menu-item>
-        </el-sub-menu>
-      </el-menu>
-    </el-aside>
-
-    <!-- 右侧主内容 -->
-    <el-container>
-      <!-- 顶部栏 -->
-      <el-header>
-        <div class="header-right">
-          <el-badge :value="3" class="badge">
-            <el-icon><Bell /></el-icon>
-          </el-badge>
-          <el-dropdown @command="handleCommand">
-            <span class="user-info">
-              {{ userStore.user?.name || 'Admin' }}
-              <el-icon><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-      </el-header>
+    <div class="main-container">
+      <!-- 侧边栏 -->
+      <aside class="sidebar" :class="{ collapsed: isCollapsed }">
+        <nav class="menu">
+          <ul>
+            <li><router-link to="/dashboard"   active-class="active">仪表盘</router-link></li>
+            <li><router-link to="/assets"      active-class="active">资产管理</router-link></li>
+            <li><router-link to="/pipelines"   active-class="active">流水线系统</router-link></li>
+            <li><router-link to="/monitoring"  active-class="active">监控系统</router-link></li>
+            <li><router-link to="/logs"          active-class="active">日志系统</router-link></li>
+            <li><router-link to="/audit"       active-class="active">审计系统</router-link></li>
+            <li><router-link to="/admin"       active-class="active">管理系统</router-link></li>
+          </ul>
+        </nav>
+      </aside>
 
       <!-- 主内容区 -->
-      <el-main>
+      <main class="content" :class="{ 'no-sidebar': isCollapsed }">
         <router-view />
-      </el-main>
-    </el-container>
-  </el-container>
+      </main>
+
+      <!-- 移动端折叠按钮 -->
+      <button class="mobile-toggle" @click="isCollapsed = !isCollapsed">
+        {{ isCollapsed ? '>>' : '<<' }}
+      </button>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import {
-  HomeFilled,
-  Monitor,
-  Link,
-  Document,
-  Setting,
-  Bell,
-  ArrowDown
-} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
-const userStore = useAuthStore()
+const authStore = useAuthStore()
 
-const activeMenu = computed(() => route.path)
+const isCollapsed = ref(false)
 
-const handleCommand = (command: string) => {
-  if (command === 'logout') {
-    userStore.logout()
-    router.push('/login')
-  } else if (command === 'profile') {
-    router.push('/settings/profile')
-  }
+const logout = () => {
+  authStore.logout()
+  router.push('/login')
 }
 </script>
 
-<style scoped lang="less">
-.main-layout {
-  height: 100vh;
-}
+<style scoped>
+#main-layout { height: 100vh; display: flex; flex-direction: column; font-family: Arial, sans-serif; }
 
-.el-aside {
-  background: #191a23;
-  border-right: 1px solid #303133;
-
-  .logo {
-    height: 60px;
-    background: #001529;
-    color: #fff;
-    text-align: center;
-    line-height: 60px;
-    font-size: 20px;
-    font-weight: bold;
-  }
-}
-
-.el-header {
+.header {
+  height: 60px;
   background: #fff;
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 1px solid #e1e4e8;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  z-index: 10;
+}
 
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
 
-    .badge {
-      cursor: pointer;
-    }
+.logout-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
-    .user-info {
-      cursor: pointer;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-  }
+.main-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 240px;
+  background: #2c3e50;
+  transition: width 0.3s;
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: 0;
+}
+
+.menu ul {
+  list-style: none;
+  padding: 20px 0;
+  margin: 0;
+}
+
+.menu a {
+  display: block;
+  padding: 14px 24px;
+  color: #ecf0f1;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.menu a:hover,
+.menu a.active {
+  background: #34495e;
+  color: #fff;
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+  background: #f7f9fc;
+  overflow-y: auto;
+  transition: margin-left 0.3s;
+  margin-left: 0;
+}
+
+.mobile-toggle {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  background: #2c3e50;
+  color: white;
+  border: none;
+  width: 32px;
+  height: 60px;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  z-index: 100;
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar { width: 0; }
+  .content { margin-left: 0 !important; }
+  .mobile-toggle { display: block; }
 }
 </style>

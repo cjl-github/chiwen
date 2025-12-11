@@ -127,3 +127,5 @@ npm install lucide-vue-next
 npm install element-plus     
 npm install @element-plus/icons-vue
 npm install -D less
+
+npm install element-plus @element-plus/icons-vue
