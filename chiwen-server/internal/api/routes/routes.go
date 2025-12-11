@@ -1,13 +1,16 @@
-// routes/setup.go  （或者你原来叫 routes/router.go / routes/route.go，随你项目里叫什么）
-
+// routes/setup.go
 package routes
 
 import (
+	"time"
+
+	"github.com/gin-contrib/cors" // ← 务必保留这一行
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
+
 	"github.com/chiwen/server/internal/api/handler"
 	"github.com/chiwen/server/internal/pkg/middleware"
 	"github.com/chiwen/server/pkg/logger"
-	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 func Setup() *gin.Engine {
@@ -24,6 +27,25 @@ func Setup() *gin.Engine {
 	r := gin.New()
 	r.Use(logger.GinLogger(), logger.GinRecovery(true))
 
+	// ==================== 正确的 CORS 中间件（彻底解决 Failed to fetch）===================
+	// 开发阶段直接放行所有来源，生产时改成 AllowOrigins 即可
+	r.Use(cors.New(cors.Config{
+		AllowAllOrigins: true, // ← 开发时用这个最快最稳
+		// 上线后只需要把上面一行注释掉，打开下面这几行即可：
+		// AllowOrigins: []string{
+		// 	"http://localhost:5173",
+		// 	"http://127.0.0.1:5173",
+		// 	"https://your-domain.com",
+		// },
+
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+	// ================================================================================
+
 	// 创建处理器实例
 	ttyHandler := handler.NewTTYHandler()
 
@@ -31,7 +53,7 @@ func Setup() *gin.Engine {
 	api := r.Group("/api/v1")
 	{
 		// 登录接口（放在最上面，方便调试）
-		api.POST("/login", handler.Login) // ← 你的 handler.Login 已经在 handler/auth.go 里实现了
+		api.POST("/login", handler.Login)
 
 		// 原有的公开接口
 		api.POST("/register", handler.RegisterHandler)
@@ -47,27 +69,20 @@ func Setup() *gin.Engine {
 		ttyGroup := api.Group("/tty")
 		{
 			ttyGroup.GET("/validate", ttyHandler.ValidateToken)
-			// WebSocket 路由（用户端
+			// WebSocket 路由（用户端）
 			ttyGroup.GET("/ws", handler.HandleWebSocket)
 		}
 	}
 
 	// ==================== 需要登录的路由 ====================
-	// 所有需要鉴权的接口统一放在这里
 	authGroup := r.Group("/api/v1")
-	authGroup.Use(middleware.AuthRequired()) // ← 你的 JWT 中间件
+	authGroup.Use(middleware.AuthRequired()) // JWT 鉴权中间件
 	{
 		// 资产相关（需要登录后才能看）
 		assetsGroup := authGroup.Group("/assets")
 		{
-			// 你以后可以再加 ListAssets、DeleteAsset 等
-			// assetsGroup.GET("", handler.ListAssets) // ← 建议你新增这个接口返回用户有权限的机器列表
 			assetsGroup.GET("/:id/tty/authorize", ttyHandler.AuthorizeTTY)
 		}
-
-		// 如果以后还有用户管理、角色管理、审计日志等，都放这里
-		// authGroup.GET("/users", handler.ListUsers)
-		// authGroup.GET("/audit/logs", handler.GetAuditLogs)
 	}
 
 	// ==================== Agent 长连接（不需要用户登录） ====================

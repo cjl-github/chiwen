@@ -8,7 +8,7 @@ app:
   aoto_migrate: true
 
 server:
-  host: "192.168.19.100"     # 或者内网IP: 10.0.0.8
+  host: "0.0.0.0"     # 监听所有接口
   external_url: "wss://jump.yourdomain.com"  # 强烈建议配这个！前端必须能访问
 
 # 如果是用 Nginx 反代，记得配置 WebSocket 支持：
