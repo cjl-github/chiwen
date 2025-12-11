@@ -8,7 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const login = async (username: string, password: string) => {
     try {
-      const res = await fetch('http://localhost:8090/api/v1/login', {
+      const res = await fetch('/api/v1/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -16,9 +16,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       const data = await res.json()
 
-      if (res.ok && data.code === 0) {
-        token.value = data.data.token
-        user.value = data.data.user
+      if (res.ok && data.token) {
+        token.value = data.token
+        user.value = data.user
         localStorage.setItem('token', token.value)
         return true
       }
@@ -42,7 +42,3 @@ export const useAuthStore = defineStore('auth', () => {
 
   return { token, user, login, logout, init }
 })
-
-
-
-

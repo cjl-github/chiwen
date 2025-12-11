@@ -24,7 +24,7 @@ export default defineConfig({
     // 所有 /api 开头的请求全部自动转发到你的后端
     proxy: {
       '/api': {
-        target: 'http://192.168.19.100:8090',   // ←←← 改成你实际后端 IP 和端口
+        target: 'http://localhost:8090',   // ←←← 改成你实际后端 IP 和端口
         changeOrigin: true,
         secure: false,
         // 可选：如果你前端代码里写的是 /api/v1/...，这一行可以省略
@@ -32,7 +32,7 @@ export default defineConfig({
       },
       // 如果你以后还有 WebSocket 长连接，也可以顺手加一条
       '/ws': {
-        target: 'http://192.168.19.100:8090',
+        target: 'http://localhost:8090',
         ws: true,
         changeOrigin: true,
         secure: false,
