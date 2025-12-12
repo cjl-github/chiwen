@@ -1,4 +1,4 @@
-// vite.config.ts   ← 完整可直接覆盖使用的最终版
+// chiwen-web/vite.config.ts
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -15,22 +15,18 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-
-  // ==================== 关键修改：开发服务器代理 ====================
   server: {
-    host: '0.0.0.0',           // 允许局域网访问（可选）
-    port: 5173,                // 前端端口，可改成 3000、8080 随便你
-    open: true,
-    // 所有 /api 开头的请求全部自动转发到你的后端
+    host: '0.0.0.0',  // 允许局域网访问（可选，便于手机/其他设备测试）
+    port: 5173,       // 前端端口，可根据需要修改
+    open: true,       // 自动打开浏览器
     proxy: {
       '/api': {
-        target: 'http://localhost:8090',   // ←←← 改成你实际后端 IP 和端口
-        changeOrigin: true,
-        secure: false,
-        // 可选：如果你前端代码里写的是 /api/v1/...，这一行可以省略
-        // rewrite: (path) => path.replace(/^\/api/, '/api')
+        target: 'http://localhost:8090',  // 后端地址（如果后端在其他 IP/端口，改这里）
+        changeOrigin: true,               // 修改 origin 头，避免后端 CORS 校验
+        secure: false,                    // 如果后端是 https，改成 true
+        // 无需 rewrite，因为前后端路径一致 (/api/v1/login)
       },
-      // 如果你以后还有 WebSocket 长连接，也可以顺手加一条
+      // 如果有 WebSocket（如 tty/ws），加这一条
       '/ws': {
         target: 'http://localhost:8090',
         ws: true,

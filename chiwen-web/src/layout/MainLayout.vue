@@ -128,7 +128,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const expandedMenus = ref({ assets: true })
+const expandedMenus = ref<Record<string, boolean>>({ assets: true })
 
 const toggleMenu = (key: string) => {
   expandedMenus.value[key] = !expandedMenus.value[key]

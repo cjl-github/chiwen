@@ -1,11 +1,4 @@
+<!-- 文件为空或未提供内容，使用占位符 -->
 <template>
-  <div class="page">
-    <h1>操作审计</h1>
-    <p>查看所有历史操作记录，支持回放</p>
-    <el-button type="primary">功能开发中...</el-button>
-  </div>
+  <div>Audit List - 正在开发中</div>
 </template>
-
-<style scoped>
-.page { padding: 40px; text-align: center; font-size: 18px; }
-</style>

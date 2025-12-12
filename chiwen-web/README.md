@@ -1,57 +1,6 @@
-# chiwen-web
+# 技术栈：前端用 Vue 3 + TypeScript + Vite + Pinia + Element Plus
 
-This template should help get you started developing with Vue 3 in Vite.
-
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
-
-
-
-
-```
-安装 nvm
+# 安装 nvm
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                    # 这句加载 nvm
@@ -117,15 +66,48 @@ cd chiwen-web
 
 # 强烈推荐换成 Naive UI（比 Element Plus 好看100倍）
 npm install naive-ui
-
-# 图标用 lucide（超轻量好看）
-npm install lucide-vue-next
-```
-
-
-
 npm install element-plus     
 npm install @element-plus/icons-vue
 npm install -D less
 
-npm install element-plus @element-plus/icons-vue
+# 图标用 lucide（超轻量好看）
+npm install lucide-vue-next
+
+# 登录流程
+前端
+    用户访问 `http://localhost:5173`
+    用户输入用户名和密码（默认：admin/admin123）
+    点击"立即登录"按钮或按Enter键
+    前端验证表单
+    发送登录请求 `/api/v1/login` → Vite代理 → `http://localhost:8090/api/v1/login`
+后端
+    1 接收请求: Gin框架接收POST请求到 `/api/v1/login`
+      参数验证: 绑定JSON到 `LoginRequest` 结构体
+      CORS处理: 通过CORS中间件允许跨域请求
+    2 用户验证
+      查询用户
+      密码验证（bcrypt哈希比较）
+      生成24小时有效的JWT Token
+      响应返回
+        JWT Token
+        用户信息（排除密码哈希）
+前端
+    1 前端保存到Pinia/LocalStorage
+      跳转到Dashboard页面
+
+### 前端错误处理
+- 网络错误：显示"网络异常，请检查后端服务是否启动"
+- 认证错误：显示"用户名或密码错误"
+- Token过期：自动跳转到登录页面
+### 后端错误处理
+- 参数错误：返回400状态码
+- 用户不存在/禁用：返回401状态码
+- 密码错误：返回401状态码
+- 服务器错误：返回500状态码
+
+### 持久化存储
+- Token保存到 `localStorage`
+- 页面刷新时从 `localStorage` 恢复状态
+- 登出时清除 `localStorage`
+
+

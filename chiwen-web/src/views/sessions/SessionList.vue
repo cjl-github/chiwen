@@ -1,13 +1,4 @@
+<!-- 文件为空或未提供内容，使用占位符 -->
 <template>
-  <div class="page">
-    <h1>会话管理</h1>
-    <p>实时查看所有在线会话，可一键终止</p>
-    <el-button type="danger">功能开发中...</el-button>
-  </div>
+  <div>Session List - 正在开发中</div>
 </template>
-
-<style scoped>
-.page { padding: 40px; text-align: center; font-size: 18px; }
-</style>
-
-
