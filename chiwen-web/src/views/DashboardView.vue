@@ -1,139 +1,40 @@
 <template>
-  <div id="main-layout">
-    <!-- 顶部栏（移除h1文字，只剩用户和退出） -->
-    <header class="header">
-      <div class="header-left">
-        <!-- 空位或图标；移除"迟文系统" -->
-        <button class="menu-toggle" @click="isCollapsed = !isCollapsed">☰</button>
-      </div>
-      <div class="top-right">
-        <span>{{ authStore.user?.name || '管理员' }}</span>
-        <button @click="logout" class="logout-btn">退出登录</button>
-      </div>
-    </header>
+  <!-- 仪表盘页面内容全部清空 -->
+  <div class="empty-dashboard">
+    <!-- 你可以留一句提示，也可以完全什么都不写 -->
+    <!-- <h3>仪表盘已关闭</h3>
+    <p>如需恢复原内容，请查看原始 DashboardView.vue 备份。</p> -->
 
-    <div class="main-container">
-      <!-- 侧边栏（整体菜单，像图片左侧） -->
-      <aside class="sidebar" :class="{ collapsed: isCollapsed }">
-        <nav class="menu">
-          <ul>
-            <li><router-link to="/dashboard" active-class="active">仪表盘</router-link></li>
-            <li><router-link to="/assets" active-class="active">资产管理</router-link></li>
-            <li><router-link to="/pipelines" active-class="active">流水线系统</router-link></li>
-            <li><router-link to="/monitoring" active-class="active">监控系统</router-link></li>
-            <li><router-link to="/logs" active-class="active">日志系统</router-link></li>
-            <li><router-link to="/audit" active-class="active">审计系统</router-link></li>
-            <li><router-link to="/admin" active-class="active">管理系统</router-link></li>
-          </ul>
-        </nav>
-      </aside>
-
-      <!-- 主内容区 -->
-      <main class="content" :class="{ 'no-sidebar': isCollapsed }">
-        <router-view />
-      </main>
-    </div>
+    <!-- 如果你希望彻底空白，连上面两行文字都删掉即可 -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-
-const router = useRouter()
-const authStore = useAuthStore()
-
-const isCollapsed = ref(false)
-
-const logout = () => {
-  authStore.logout()
-  router.push('/login')
-}
+// 这里原来可能有大量请求接口、ECharts 初始化、定时器等代码
+// 全部都不需要了，直接保持空即可
+// 如果你之前备份过原文件，现在可以放心删光 script 内容
 </script>
 
 <style scoped>
-#main-layout { height: 100vh; display: flex; flex-direction: column; font-family: Arial, sans-serif; }
-
-.header {
-  height: 60px;
-  background: #fff;
-  border-bottom: 1px solid #e1e4e8;
-  display: flex;
+/* 保持背景和原来的内容区一致，避免页面突变 */
+.empty-dashboard {
+  width: 100%;
+  height: 100%;
+  background: #f7f9fc; /* 与 MainLayout.vue 中 .content 的背景色一致 */
+  /* 可选：居中显示提示文字 */
+  /* display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  z-index: 10;
+  color: #999;
+  font-size: 18px; */
 }
 
-.header-left { display: flex; align-items: center; }
-.menu-toggle { background: none; border: none; font-size: 24px; cursor: pointer; display: none; } /* 移动端显示 */
-
-.top-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.logout-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 6px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.main-container {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-.sidebar {
-  width: 240px;
-  background: #2c3e50; /* 像图片深色侧边栏 */
-  transition: width 0.3s;
-  overflow: hidden;
-}
-
-.sidebar.collapsed {
-  width: 0;
-}
-
-.menu ul {
-  list-style: none;
-  padding: 20px 0;
-  margin: 0;
-}
-
-.menu a {
-  display: block;
-  padding: 14px 24px;
-  color: #ecf0f1;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-
-.menu a:hover,
-.menu a.active {
-  background: #34495e;
-  color: #fff;
-}
-
-.content {
-  flex: 1;
-  padding: 24px;
-  background: #f7f9fc;
-  overflow-y: auto;
-  transition: margin-left 0.3s;
-  margin-left: 0;
-}
-
-@media (max-width: 768px) {
-  .sidebar { width: 0; }
-  .content { margin-left: 0 !important; }
-  .menu-toggle { display: block; }
+/* 如果你发现还有黄色边框（可能是全局卡片样式），强制清除 */
+:deep(.el-card),
+:deep(.el-card__body) {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 </style>
