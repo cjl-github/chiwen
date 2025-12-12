@@ -19,7 +19,7 @@ const router = createRouter({
       children: [
         // 仪表盘
         {
-          path: 'dashboard',
+          path: '',
           name: 'dashboard',
           component: () => import('@/views/DashboardView.vue'),
           meta: { title: '仪表盘' }

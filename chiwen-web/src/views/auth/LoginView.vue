@@ -85,29 +85,46 @@ const rules = {
   password: [{ required: true, message: '请输入密码' }]
 }
 
-const handleLogin = async () => {
-  try {
-    await loginFormRef.value.validate()
-  } catch {
-    return
-  }
-
-  loading.value = true
-  try {
-    const success = await authStore.login(form.username.trim(), form.password)
-
-    if (success) {
-      message.success('登录成功！')
-      router.push('/dashboard')
-    } else {
-      message.error('用户名或密码错误')
+  const handleLogin = async () => {
+    console.log('开始处理登录');
+    console.log('表单数据:', form);
+    
+    // 简单的表单验证
+    if (!form.username.trim()) {
+      console.log('表单验证失败: 用户名为空');
+      message.error('请输入用户名');
+      return;
     }
-  } catch (error) {
-    message.error('网络异常，请检查后端服务是否启动')
-  } finally {
-    loading.value = false
+    
+    if (!form.password) {
+      console.log('表单验证失败: 密码为空');
+      message.error('请输入密码');
+      return;
+    }
+
+    console.log('表单验证通过，开始登录');
+    loading.value = true
+    
+    try {
+      const success = await authStore.login(form.username.trim(), form.password)
+      console.log('登录结果:', success);
+
+      if (success) {
+        console.log('登录成功，跳转到dashboard');
+        message.success('登录成功！')
+        router.push('/dashboard')
+      } else {
+        console.log('登录失败，显示错误消息');
+        message.error('用户名或密码错误')
+      }
+    } catch (error) {
+      console.error('登录异常:', error);
+      message.error('网络异常，请检查后端服务是否启动')
+    } finally {
+      loading.value = false
+      console.log('登录处理完成');
+    }
   }
-}
 </script>
 
 <style scoped lang="less">
