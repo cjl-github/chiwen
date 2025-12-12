@@ -16,7 +16,9 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
     "@element-plus/icons-vue": "^2.3.2",
+    "ant-design-vue": "^4.2.6",
     "bcryptjs": "^3.0.3",
     "element-plus": "^2.12.0",
     "lucide-vue-next": "^0.559.0",

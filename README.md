@@ -91,6 +91,8 @@ chiwen-web
 │   │   ├── auth.ts
 │   │   └── counter.ts
 │   └── views
+│       ├── admin
+│       │   └── AdminView.vue
 │       ├── assets
 │       │   └── AssetsList.vue
 │       ├── audit
@@ -98,27 +100,34 @@ chiwen-web
 │       ├── auth
 │       │   └── LoginView.vue
 │       ├── DashboardView.vue
+│       ├── logs
+│       │   └── LogsView.vue
+│       ├── management
+│       ├── monitoring
+│       │   └── MonitoringView.vue
+│       ├── pipeline
+│       │   └── PipelineList.vue
 │       └── sessions
 │           └── SessionList.vue
 具体文件如下
-https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/main.ts
 https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/App.vue
 https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/layout/MainLayout.vue
+https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/main.ts
 https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/router/index.ts
+
 https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/stores/auth.ts
 https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/stores/counter.ts
-https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/DashboardView.vue
-https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/sessions/SessionList.vue
-https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/auth/LoginView.vue
+
+https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/admin/AdminView.vue
+https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/assets/AssetsList.vue
 https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/audit/AuditList.vue
+https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/auth/LoginView.vue
+https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/DashboardView.vue
+https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/monitoring/MonitoringView.vue
+https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/sessions/SessionList.vue
 https://github.com/cjl-github/chiwen/blob/main/chiwen-web/src/views/assets/AssetsList.vue
 
-根据我的 项目 先教我 一步 一步实现 这个侧边栏的优化
-仪表盘
-资产管理
-流水线系统
-监控系统
-日志系统
-审计系统
-管理系统
-  
+问题1: 上传上去的 LogsVuew.vue 文件在 项目中是灰色的 这是为什么 而且 在github中 看不到
+需求2: 能不能 和这个图片 一样 修改成只有 侧边栏  是一个 整体 迟文系统文字的 部分  不要了
+问题3: 项目中有无用的 目录 或文件吗？ 指出来 让我 删掉
+最后 你修改的所有文件 都需 需要 完整的 方便我复制 

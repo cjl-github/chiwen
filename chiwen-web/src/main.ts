@@ -1,23 +1,21 @@
-// src/main.ts
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
 import App from './App.vue'
-import router from './router'  // ← 确保导入 Router
+import router from './router'
+import { createPinia } from 'pinia'
+import Antd from 'ant-design-vue'
+import 'ant-design-vue/dist/reset.css'          // Antd 4.x 推荐的样式文件
 
-// Element Plus（如果你用 Element）
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-
+// 新增这两行：全局注册所有图标（以后随便用，不用每次 import）
+import * as Icons from '@ant-design/icons-vue'
 const app = createApp(App)
 
 app.use(createPinia())
-app.use(router)  // ← 确保注册 Router
-app.use(ElementPlus)
+app.use(router)
+app.use(Antd)
 
-// 注册图标
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
-}
+// 全局注册图标组件
+Object.keys(Icons).forEach(key => {
+  app.component(key, (Icons as any)[key])
+})
 
 app.mount('#app')

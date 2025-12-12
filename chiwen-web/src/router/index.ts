@@ -14,56 +14,80 @@ const router = createRouter({
 
     {
       path: '/dashboard',
-      name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue'),
-      meta: { requiresAuth: true }
-    },
+      component: () => import('@/layout/MainLayout.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        // 仪表盘
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('@/views/DashboardView.vue'),
+          meta: { title: '仪表盘' }
+        },
 
-    {
-      path: '/assets',
-      name: 'assets',
-      component: () => import('@/views/assets/AssetsList.vue'),
-      meta: { requiresAuth: true }
-    },
+        // ========== 资产管理及其子路由 ==========
+        {
+          path: 'assets/hosts',
+          name: 'assets-hosts',
+          component: () => import('@/views/assets/HostsView.vue'),
+          meta: { title: '主机设备' }
+        },
+        {
+          path: 'assets/network',
+          name: 'assets-network',
+          component: () => import('@/views/assets/NetworkView.vue'),
+          meta: { title: '网络设备' }
+        },
+        {
+          path: 'assets/database',
+          name: 'assets-database',
+          component: () => import('@/views/assets/DatabaseView.vue'),
+          meta: { title: '数据库' }
+        },
+        {
+          path: 'assets/cert',
+          name: 'assets-cert',
+          component: () => import('@/views/assets/CertView.vue'),
+          meta: { title: '证书' }
+        },
 
-    {
-      path: '/pipelines',
-      name: 'pipelines',
-      component: () => import('@/views/sessions/SessionList.vue'),
-      meta: { requiresAuth: true }
-    },
-
-    {
-      path: '/monitoring',
-      name: 'monitoring',
-      component: () => import('@/views/monitoring/MonitoringView.vue'),
-      meta: { requiresAuth: true }
-    },
-
-    {
-      path: '/logs',
-      name: 'logs',
-      component: () => import('@/views/logs/LogsView.vue'),
-      meta: { requiresAuth: true }
-    },
-
-    {
-      path: '/audit',
-      name: 'audit',
-      component: () => import('@/views/audit/AuditList.vue'),
-      meta: { requiresAuth: true }
-    },
-
-    {
-      path: '/admin',
-      name: 'admin',
-      component: () => import('@/views/admin/AdminView.vue'),
-      meta: { requiresAuth: true }
+        // 其他一级页面
+        {
+          path: 'pipelines',
+          name: 'pipelines',
+          component: () => import('@/views/sessions/SessionList.vue'),
+          meta: { title: '流水线系统' }
+        },
+        {
+          path: 'monitoring',
+          name: 'monitoring',
+          component: () => import('@/views/monitoring/MonitoringView.vue'),
+          meta: { title: '监控系统' }
+        },
+        {
+          path: 'logs',
+          name: 'logs',
+          component: () => import('@/views/logs/LogsView.vue'),
+          meta: { title: '日志系统' }
+        },
+        {
+          path: 'audit',
+          name: 'audit',
+          component: () => import('@/views/audit/AuditList.vue'),
+          meta: { title: '审计系统' }
+        },
+        {
+          path: 'admin',
+          name: 'admin',
+          component: () => import('@/views/admin/AdminView.vue'),
+          meta: { title: '管理系统' }
+        }
+      ]
     }
   ]
 })
 
-// 关键修改：使用你真实的状态名 isLoggedIn
+// 登录守卫（你原来的逻辑，完全保留）
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
