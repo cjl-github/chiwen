@@ -1,51 +1,144 @@
 <template>
-  <div class="q-pa-md">
-    <q-table
-      title="主机资产列表"
-      :rows="assets"
-      :columns="columns"
-      row-key="id"
-      :loading="loading"
-      :pagination="{ rowsPerPage: 10 }"
-    >
-      <template v-slot:loading>
-        <q-inner-loading showing color="primary" />
-      </template>
-    </q-table>
+  <div class="hosts-view">
+    <el-card class="hosts-card" header="主机资产列表">
+      <el-table
+        :data="assets"
+        :loading="loading"
+        row-key="id"
+        size="medium"
+        style="width: 100%"
+      >
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        />
+        <el-table-column
+          prop="hostname"
+          label="主机名"
+          width="150"
+        />
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="100"
+        >
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)">
+              {{ row.status }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="created_at"
+          label="创建时间"
+          width="180"
+        />
+        <el-table-column
+          prop="updated_at"
+          label="更新时间"
+          width="180"
+        />
+        <el-table-column
+          prop="labels"
+          label="标签"
+          width="150"
+        >
+          <template #default="{ row }">
+            <span v-if="row.labels">{{ formatJson(row.labels) }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="allowed_users"
+          label="允许用户"
+          width="150"
+        >
+          <template #default="{ row }">
+            <span v-if="row.allowed_users && row.allowed_users.length > 0">{{ row.allowed_users.join(', ') }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="static_info"
+          label="静态信息"
+          width="150"
+        >
+          <template #default="{ row }">
+            <span v-if="row.static_info">{{ formatJson(row.static_info) }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="dynamic_info"
+          label="动态信息"
+          width="150"
+        >
+          <template #default="{ row }">
+            <span v-if="row.dynamic_info">{{ formatJson(row.dynamic_info) }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="is_deleted"
+          label="已删除"
+          width="100"
+        >
+          <template #default="{ row }">
+            <el-tag :type="row.is_deleted ? 'danger' : 'success'">
+              {{ row.is_deleted ? '是' : '否' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useAssetsStore } from '@/stores/assets'; // 导入store
+import { onMounted, ref, computed } from 'vue';
+import { useAssetsStore } from '@/stores/assets';
+import { ElCard, ElTable, ElTableColumn, ElTag, ElMessage } from 'element-plus';
 
 const assetsStore = useAssetsStore();
-const assets = ref([]);
 const loading = ref(false);
 
-const columns = [
-  { name: 'id', label: 'ID', field: 'id', sortable: true },
-  { name: 'hostname', label: '主机名', field: 'hostname', sortable: true },
-  { name: 'status', label: '状态', field: 'status', sortable: true },
-  { name: 'created_at', label: '创建时间', field: 'created_at', sortable: true },
-  { name: 'updated_at', label: '更新时间', field: 'updated_at', sortable: true },
-  { name: 'labels', label: '标签', field: 'labels', format: val => val ? JSON.stringify(val) : '' },
-  { name: 'allowed_users', label: '允许用户', field: 'allowed_users', format: val => val ? val.join(', ') : '' },
-  { name: 'static_info', label: '静态信息', field: 'static_info', format: val => val ? JSON.stringify(val) : '' },
-  { name: 'dynamic_info', label: '动态信息', field: 'dynamic_info', format: val => val ? JSON.stringify(val) : '' },
-  { name: 'is_deleted', label: '已删除', field: 'is_deleted', format: val => val ? '是' : '否' }
-  // 可以根据需要添加更多列，如client_public_key（但公钥可能敏感，不建议显示完整），agent_secret_key（秘密，不显示）
-];
+const assets = computed(() => assetsStore.assets);
+
+const getStatusType = (status) => {
+  switch (status) {
+    case 'online':
+      return 'success';
+    case 'offline':
+      return 'danger';
+    case 'maintenance':
+      return 'warning';
+    default:
+      return 'info';
+  }
+};
+
+const formatJson = (obj) => {
+  try {
+    if (typeof obj === 'string') {
+      return obj;
+    }
+    return JSON.stringify(obj, null, 2);
+  } catch {
+    return String(obj);
+  }
+};
 
 onMounted(async () => {
   loading.value = true;
   try {
-    await assetsStore.fetchAssets(); // 调用store action拉取数据
-    assets.value = assetsStore.assets; // 从store绑定数据
+    await assetsStore.fetchAssets();
+    if (assetsStore.error) {
+      ElMessage.error('加载资产数据失败: ' + assetsStore.error);
+    }
   } catch (error) {
     console.error('加载资产数据失败:', error);
-    // 可选：使用Quasar notify显示错误
-    // this.$q.notify({ type: 'negative', message: '加载失败' });
+    ElMessage.error('加载资产数据失败');
   } finally {
     loading.value = false;
   }
@@ -53,8 +146,20 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* 可选样式，例如调整表格宽度或颜色 */
-.q-table {
+.hosts-view {
+  padding: 20px;
+}
+
+.hosts-card {
   width: 100%;
+}
+
+:deep(.el-table) {
+  width: 100%;
+}
+
+:deep(.el-table__header-wrapper th) {
+  background-color: #fafafa;
+  font-weight: 600;
 }
 </style>

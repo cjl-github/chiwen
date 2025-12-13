@@ -2,11 +2,9 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
-import Antd from 'ant-design-vue'
-import 'ant-design-vue/dist/reset.css'          // Antd 4.x 推荐的样式文件
-
-// 新增这两行：全局注册所有图标（以后随便用，不用每次 import）
-import * as Icons from '@ant-design/icons-vue'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { useAuthStore } from './stores/auth'  // 新增：导入 auth store
 
 const app = createApp(App)
@@ -18,11 +16,11 @@ const authStore = useAuthStore()
 authStore.initAuth()
 
 app.use(router)
-app.use(Antd)
+app.use(ElementPlus)
 
-// 全局注册图标组件
-Object.keys(Icons).forEach(key => {
-  app.component(key, (Icons as any)[key])
-})
+// 全局注册Element Plus图标组件
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
 
 app.mount('#app')

@@ -19,7 +19,7 @@ const router = createRouter({
       children: [
         // 仪表盘
         {
-          path: 'dashboard',
+          path: '',
           name: 'dashboard',
           component: () => import('@/views/DashboardView.vue'),
           meta: { title: '仪表盘' }
@@ -65,6 +65,12 @@ const router = createRouter({
           meta: { title: '会话列表' }
         },
         {
+          path: 'pipelines',
+          name: 'pipelines',
+          component: () => import('@/views/pipeline/PipelineList.vue'),
+          meta: { title: '流水线' }
+        },
+        {
           path: 'monitoring',
           name: 'monitoring',
           component: () => import('@/views/monitoring/MonitoringView.vue'),
@@ -89,6 +95,44 @@ const router = createRouter({
           meta: { title: '管理系统' }
         }
       ]
+    },
+
+    // 直接访问资产路由的重定向（为了兼容旧链接）
+    {
+      path: '/assets/hosts',
+      redirect: '/dashboard/assets/hosts'
+    },
+    {
+      path: '/assets/network',
+      redirect: '/dashboard/assets/network'
+    },
+    {
+      path: '/assets/database',
+      redirect: '/dashboard/assets/database'
+    },
+    {
+      path: '/assets/cert',
+      redirect: '/dashboard/assets/cert'
+    },
+    {
+      path: '/pipelines',
+      redirect: '/dashboard/pipelines'
+    },
+    {
+      path: '/monitoring',
+      redirect: '/dashboard/monitoring'
+    },
+    {
+      path: '/logs',
+      redirect: '/dashboard/logs'
+    },
+    {
+      path: '/audit',
+      redirect: '/dashboard/audit'
+    },
+    {
+      path: '/admin',
+      redirect: '/dashboard/admin'
     }
   ]
 });

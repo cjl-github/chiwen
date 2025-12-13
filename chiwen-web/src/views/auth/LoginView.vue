@@ -1,73 +1,76 @@
-<!-- src/views/auth/LoginView.vue -->
 <template>
   <div class="login-container">
-    <a-card class="login-box">
+    <el-card class="login-box">
       <!-- 标题区 -->
-      <template #title>
-        <div class="login-header">
-          <h1 class="title">
-            <span class="logo-text">螭吻</span>
-            <span class="subtitle">运维平台</span>
-          </h1>
-          <p class="desc">Chiwen Web Terminal System</p>
-        </div>
-      </template>
+      <div class="login-header">
+        <h1 class="title">
+          <span class="logo-text">螭吻</span>
+          <span class="subtitle">运维平台</span>
+        </h1>
+        <p class="desc">Chiwen Web Terminal System</p>
+      </div>
 
       <!-- 登录表单 -->
-      <a-form
+      <el-form
         ref="loginFormRef"
         :model="form"
         :rules="rules"
         size="large"
         @submit.prevent="handleLogin"
       >
-        <a-form-item field="username" :validate-trigger="['change', 'blur']">
-          <a-input
+        <el-form-item prop="username">
+          <el-input
             v-model="form.username"
             placeholder="请输入用户名"
-            allow-clear
+            clearable
           >
-            <template #prefix><UserOutlined /></template>
-          </a-input>
-        </a-form-item>
+            <template #prefix>
+              <el-icon><User /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
 
-        <a-form-item field="password" :validate-trigger="['change', 'blur']">
-          <a-input-password
+        <el-form-item prop="password">
+          <el-input
             v-model="form.password"
+            type="password"
             placeholder="请输入密码"
-            allow-clear
+            clearable
+            show-password
           >
-            <template #prefix><LockOutlined /></template>
-          </a-input-password>
-        </a-form-item>
+            <template #prefix>
+              <el-icon><Lock /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
 
-        <a-form-item>
-          <a-button
+        <el-form-item>
+          <el-button
             type="primary"
             size="large"
             class="login-btn"
             :loading="loading"
-            html-type="submit"
+            native-type="submit"
           >
             {{ loading ? '登录中...' : '立即登录' }}
-          </a-button>
-        </a-form-item>
-      </a-form>
+          </el-button>
+        </el-form-item>
+      </el-form>
 
       <!-- 页脚 -->
       <div class="footer">
         © 2025 Chiwen WebTTY System. All rights reserved.
       </div>
-    </a-card>
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { message } from 'ant-design-vue'  // 正确导入 Ant Design Vue 的 message
+import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import { User, Lock } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -81,50 +84,50 @@ const form = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名' }],
-  password: [{ required: true, message: '请输入密码' }]
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
-  const handleLogin = async () => {
-    console.log('开始处理登录');
-    console.log('表单数据:', form);
-    
-    // 简单的表单验证
-    if (!form.username.trim()) {
-      console.log('表单验证失败: 用户名为空');
-      message.error('请输入用户名');
-      return;
-    }
-    
-    if (!form.password) {
-      console.log('表单验证失败: 密码为空');
-      message.error('请输入密码');
-      return;
-    }
-
-    console.log('表单验证通过，开始登录');
-    loading.value = true
-    
-    try {
-      const success = await authStore.login(form.username.trim(), form.password)
-      console.log('登录结果:', success);
-
-      if (success) {
-        console.log('登录成功，跳转到dashboard');
-        message.success('登录成功！')
-        router.push('/dashboard')
-      } else {
-        console.log('登录失败，显示错误消息');
-        message.error('用户名或密码错误')
-      }
-    } catch (error) {
-      console.error('登录异常:', error);
-      message.error('网络异常，请检查后端服务是否启动')
-    } finally {
-      loading.value = false
-      console.log('登录处理完成');
-    }
+const handleLogin = async () => {
+  console.log('开始处理登录');
+  console.log('表单数据:', form);
+  
+  // 简单的表单验证
+  if (!form.username.trim()) {
+    console.log('表单验证失败: 用户名为空');
+    ElMessage.error('请输入用户名');
+    return;
   }
+  
+  if (!form.password) {
+    console.log('表单验证失败: 密码为空');
+    ElMessage.error('请输入密码');
+    return;
+  }
+
+  console.log('表单验证通过，开始登录');
+  loading.value = true
+  
+  try {
+    const success = await authStore.login(form.username.trim(), form.password)
+    console.log('登录结果:', success);
+
+    if (success) {
+      console.log('登录成功，跳转到dashboard');
+      ElMessage.success('登录成功！')
+      router.push('/dashboard')
+    } else {
+      console.log('登录失败，显示错误消息');
+      ElMessage.error('用户名或密码错误')
+    }
+  } catch (error) {
+    console.error('登录异常:', error);
+    ElMessage.error('网络异常，请检查后端服务是否启动')
+  } finally {
+    loading.value = false
+    console.log('登录处理完成');
+  }
+}
 </script>
 
 <style scoped lang="less">
@@ -142,7 +145,7 @@ const rules = {
   max-width: 420px;
   border-radius: 12px;
   overflow: hidden;
-  background: white;  // Antd card 默认白底
+  background: white;
 
   .login-header {
     text-align: center;
@@ -159,7 +162,7 @@ const rules = {
       gap: 8px;
 
       .logo-text {
-        color: #1890ff;
+        color: #409eff;
         font-size: 42px;
         font-weight: 900;
       }
