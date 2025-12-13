@@ -203,15 +203,30 @@ func CreateAssetWithAllowedUsers(id, hostname, clientPubKey, agentSecretKey, all
 		staticInfoJSON = []byte("{}")
 	}
 
-	// 使用MySQL的JSON_ARRAY()函数直接构建JSON数组
-	// 注意：allowedUsersJSON应该是"[5]"这样的字符串，我们需要提取数字5
-	// 但我们直接使用MySQL的JSON_ARRAY(5)来确保正确的JSON格式
+	// 解析 allowedUsersJSON 字符串为 JSON 数组
+	// 如果解析失败，使用默认值 JSON_ARRAY(5)
+	var allowedUsersParam interface{}
+	if allowedUsersJSON != "" {
+		// 尝试解析为 JSON
+		var arr []interface{}
+		if err := json.Unmarshal([]byte(allowedUsersJSON), &arr); err == nil {
+			// 解析成功，使用 JSON 字符串
+			allowedUsersParam = allowedUsersJSON
+		} else {
+			// 解析失败，使用默认值
+			allowedUsersParam = "JSON_ARRAY(5)"
+		}
+	} else {
+		// 空字符串，使用默认值
+		allowedUsersParam = "JSON_ARRAY(5)"
+	}
+
 	query := `
 		INSERT INTO assets 
 			(id, hostname, client_public_key, labels, allowed_users, status, 
 			 created_at, updated_at, is_deleted, agent_secret_key,
 			 static_info, dynamic_info)
-		VALUES (?, ?, ?, ?, JSON_ARRAY(5), 'online', NOW(), NOW(), 0, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, 'online', NOW(), NOW(), 0, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 			hostname = VALUES(hostname),
 			client_public_key = VALUES(client_public_key),
@@ -221,7 +236,7 @@ func CreateAssetWithAllowedUsers(id, hostname, clientPubKey, agentSecretKey, all
 			agent_secret_key = VALUES(agent_secret_key),
 			static_info = VALUES(static_info)
 	`
-	_, err = db.Exec(query, id, hostname, clientPubKey, `{}`, agentSecretKey, staticInfoJSON, `{}`)
+	_, err = db.Exec(query, id, hostname, clientPubKey, `{}`, allowedUsersParam, agentSecretKey, staticInfoJSON, `{}`)
 
 	if err != nil {
 		zap.L().Error("Failed to create/update asset with allowed users",
@@ -233,6 +248,74 @@ func CreateAssetWithAllowedUsers(id, hostname, clientPubKey, agentSecretKey, all
 			zap.String("id", id),
 			zap.String("hostname", hostname),
 			zap.String("static_info", string(staticInfoJSON)))
+	}
+
+	return err
+}
+
+// CreateAssetWithStaticAndUsers 写入正式资产表，支持自定义 static_info 和 allowed_users
+func CreateAssetWithStaticAndUsers(id, hostname, clientPubKey, agentSecretKey, staticInfoJSON, allowedUsersJSON string) error {
+	// 清理客户端公钥格式
+	cleanPubKey := strings.TrimSpace(clientPubKey)
+
+	// 如果 staticInfoJSON 为空，创建基本的静态信息
+	if staticInfoJSON == "" || staticInfoJSON == "{}" {
+		basicStaticInfo := map[string]interface{}{
+			"hostname": hostname,
+			"os":       "unknown",
+		}
+		if bytes, err := json.Marshal(basicStaticInfo); err == nil {
+			staticInfoJSON = string(bytes)
+		} else {
+			staticInfoJSON = "{}"
+		}
+	}
+
+	// 解析 allowedUsersJSON 字符串为 JSON 数组
+	// 如果解析失败，使用默认值 JSON_ARRAY(5)
+	var allowedUsersParam interface{}
+	if allowedUsersJSON != "" {
+		// 尝试解析为 JSON
+		var arr []interface{}
+		if err := json.Unmarshal([]byte(allowedUsersJSON), &arr); err == nil {
+			// 解析成功，使用 JSON 字符串
+			allowedUsersParam = allowedUsersJSON
+		} else {
+			// 解析失败，使用默认值
+			allowedUsersParam = "JSON_ARRAY(5)"
+		}
+	} else {
+		// 空字符串，使用默认值
+		allowedUsersParam = "JSON_ARRAY(5)"
+	}
+
+	query := `
+		INSERT INTO assets 
+			(id, hostname, client_public_key, labels, allowed_users, status, 
+			 created_at, updated_at, is_deleted, agent_secret_key,
+			 static_info, dynamic_info)
+		VALUES (?, ?, ?, ?, ?, 'online', NOW(), NOW(), 0, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			hostname = VALUES(hostname),
+			client_public_key = VALUES(client_public_key),
+			allowed_users = VALUES(allowed_users),
+			status = 'online',
+			updated_at = NOW(),
+			agent_secret_key = VALUES(agent_secret_key),
+			static_info = VALUES(static_info)
+	`
+	_, err := db.Exec(query, id, hostname, cleanPubKey, `{}`, allowedUsersParam, agentSecretKey, staticInfoJSON, `{}`)
+
+	if err != nil {
+		zap.L().Error("Failed to create/update asset with static info and allowed users",
+			zap.String("id", id),
+			zap.String("hostname", hostname),
+			zap.Error(err))
+	} else {
+		zap.L().Info("Asset created/updated with custom static info",
+			zap.String("id", id),
+			zap.String("hostname", hostname),
+			zap.String("static_info", staticInfoJSON))
 	}
 
 	return err

@@ -55,6 +55,9 @@ func ApproveHandler(c *gin.Context) {
 		return
 	}
 
+	// 获取 Agent 的真实 IP（Gin 框架推荐方式）
+	agentIP := c.ClientIP() // 自动处理 X-Forwarded-For、X-Real-IP 等，优先级最高
+
 	// 2️⃣ 调用业务层逻辑 ApproveApply
 	// 该函数会完成：
 	//   - 查询 pending 状态的申请
@@ -62,7 +65,7 @@ func ApproveHandler(c *gin.Context) {
 	//   - 用客户端公钥加密 secret
 	//   - 写入正式资产表 assets
 	//   - 更新临时申请状态为 approved
-	encryptedSecret, err := service.ApproveApply(req.ID)
+	encryptedSecret, err := service.ApproveApply(req.ID, agentIP)
 	if err != nil {
 		// 如果审批过程出现任何错误（如申请不存在、数据库写入失败、加密失败等）
 		// 返回 HTTP 400 并携带错误信息

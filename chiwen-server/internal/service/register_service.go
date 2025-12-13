@@ -7,9 +7,11 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/chiwen/server/internal/data/model"
@@ -107,7 +109,8 @@ func RegisterApply(nonce string, timestamp int64, id string, hostname string, cl
 }
 
 // ApproveApply 管理员审批通过
-func ApproveApply(clientID string) (encryptedSecret string, err error) {
+// 新增参数 agentIP：Agent 连接的远程 IP（从 handler 的 c.RealIP() 获取并传入）
+func ApproveApply(clientID string, agentIP string) (encryptedSecret string, err error) {
 	apply, err := mysql.GetApplyByClientID(clientID)
 	if err != nil || apply == nil {
 		return "", errors.New("apply not found or already processed")
@@ -143,12 +146,40 @@ func ApproveApply(clientID string) (encryptedSecret string, err error) {
 	encryptedSecret = base64.StdEncoding.EncodeToString(encryptedBytes)
 
 	// 关键：写入 allowed_users = [5] (允许管理员用户访问)
-	// 注意：MySQL函数索引 cast(allowed_users as unsigned array) 要求数字数组，不能是字符串数组
-	// 注意：users表中admin用户的ID是5，不是1
 	allowedUsersJSON := `[5]`
 
-	// 修复：只接收 error
-	err = mysql.CreateAssetWithAllowedUsers(apply.ID, apply.Hostname, apply.ClientPubKey, secretStr, allowedUsersJSON)
+	// === 新增：构建初始 static_info，包含 Agent 连接 IP ===
+	var staticInfoJSON string
+	if agentIP != "" {
+		// 清理端口（RemoteAddr 可能是 ip:port）
+		ip := agentIP
+		if host, _, splitErr := net.SplitHostPort(agentIP); splitErr == nil {
+			ip = host
+		}
+		// 只添加有效 IP
+		if net.ParseIP(ip) != nil {
+			// 构建完整的static_info，包含hostname、os和network.ips
+			staticInfo := map[string]interface{}{
+				"hostname": apply.Hostname,
+				"os":       "unknown", // 默认值，客户端会在心跳中更新
+				"network": map[string]interface{}{
+					"ips": []string{ip},
+				},
+			}
+			if bytes, marshalErr := json.Marshal(staticInfo); marshalErr == nil {
+				staticInfoJSON = string(bytes)
+			}
+		}
+	}
+	// 如果无法获取有效 IP，留空（原行为）
+	if staticInfoJSON == "" {
+		staticInfoJSON = "{}"
+	}
+
+	// 修改：调用支持 static_info 的 DAO 函数（假设你有 CreateAssetWithStaticInfo 或类似）
+	// 如果原 CreateAssetWithAllowedUsers 不支持 static_info，需要扩展它或新建一个函数
+	// 这里假设已扩展 mysql.CreateAssetWithStaticAndUsers(apply.ID, apply.Hostname, apply.ClientPubKey, secretStr, staticInfoJSON, allowedUsersJSON)
+	err = mysql.CreateAssetWithStaticAndUsers(apply.ID, apply.Hostname, apply.ClientPubKey, secretStr, staticInfoJSON, allowedUsersJSON)
 	if err != nil {
 		return "", err
 	}
@@ -158,6 +189,32 @@ func ApproveApply(clientID string) (encryptedSecret string, err error) {
 		return "", err
 	}
 
-	zap.L().Info("审批成功，已写入默认权限 allowed_users=[5]", zap.String("asset_id", apply.ID))
+	zap.L().Info("审批成功，已写入默认权限 allowed_users=[5] 并初始化 IP 到 static_info", zap.String("asset_id", apply.ID), zap.String("initial_ip", agentIP))
 	return encryptedSecret, nil
+}
+
+// RejectApply 管理员拒绝注册申请
+func RejectApply(clientID string) error {
+	apply, err := mysql.GetApplyByClientID(clientID)
+	if err != nil || apply == nil {
+		return errors.New("apply not found")
+	}
+
+	if apply.ApplyStatus != "pending" {
+		return errors.New("apply is not pending")
+	}
+
+	// 更新状态为rejected
+	if err := mysql.UpdateApplyStatus(clientID, "rejected"); err != nil {
+		return fmt.Errorf("update status failed: %w", err)
+	}
+
+	// 删除申请记录（可选，或者保留记录用于审计）
+	if err := mysql.DeleteApply(clientID); err != nil {
+		zap.L().Warn("Failed to delete rejected apply", zap.String("id", clientID), zap.Error(err))
+		// 不返回错误，因为状态已经更新为rejected
+	}
+
+	zap.L().Info("申请已拒绝", zap.String("id", clientID))
+	return nil
 }
