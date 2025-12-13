@@ -35,7 +35,7 @@ func GetAssetByID(id string) (*model.Asset, error) {
 	zap.L().Debug("GetAssetByID called", zap.String("id", id))
 
 	var a model.Asset
-	query := `SELECT id, client_public_key, hostname, labels, allowed_users, status, 
+	query := `SELECT id, client_public_key, hostname, labels, allowed_users, static_info, dynamic_info, status, 
 	                 created_at, updated_at, is_deleted 
 	          FROM assets WHERE id = ? AND is_deleted = 0`
 
@@ -155,4 +155,25 @@ func UpdateAssetHeartbeat(id string) error {
 		zap.Int64("rows_affected", rowsAffected))
 
 	return nil
+}
+
+// GetAssetsList 获取资产列表
+func GetAssetsList() ([]model.Asset, error) {
+	zap.L().Debug("GetAssetsList called")
+
+	var assets []model.Asset
+	query := `SELECT id, client_public_key, hostname, labels, allowed_users, static_info, dynamic_info, status, 
+	                 created_at, updated_at, is_deleted 
+	          FROM assets WHERE is_deleted = 0 ORDER BY updated_at DESC`
+
+	err := db.Select(&assets, query)
+	if err != nil {
+		zap.L().Error("GetAssetsList query failed",
+			zap.String("query", query),
+			zap.Error(err))
+		return nil, err
+	}
+
+	zap.L().Debug("Assets list retrieved", zap.Int("count", len(assets)))
+	return assets, nil
 }

@@ -81,6 +81,7 @@ func Setup() *gin.Engine {
 		// 资产相关（需要登录后才能看）
 		assetsGroup := authGroup.Group("/assets")
 		{
+			assetsGroup.GET("/list", handler.AssetsListHandler)
 			assetsGroup.GET("/:id/tty/authorize", ttyHandler.AuthorizeTTY)
 		}
 	}

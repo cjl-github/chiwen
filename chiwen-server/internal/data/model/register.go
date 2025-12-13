@@ -13,6 +13,8 @@ type Asset struct {
 	Hostname     string         `db:"hostname"`
 	Labels       sql.NullString `db:"labels"`        // JSON
 	AllowedUsers sql.NullString `db:"allowed_users"` // ★ 新增：允许的用户列表（JSON格式）
+	StaticInfo   sql.NullString `db:"static_info"`   // 静态信息（CPU/OS/磁盘/网卡等）
+	DynamicInfo  sql.NullString `db:"dynamic_info"`  // 动态信息（CPU使用率/内存/磁盘使用率等）
 
 	Status    string    `db:"status"` // online/offline/maintenance
 	CreatedAt time.Time `db:"created_at"`

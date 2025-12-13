@@ -39,13 +39,11 @@ export const useAssetsStore = defineStore('assets', {
       this.error = null;
 
       try {
-        // 常见后端 API 路径猜测：尝试这些之一（根据控制台 Network 检查实际路径）
-        // 如果 404，改为 '/api/v1/assets' 或查看后端日志确认
-        const response = await axios.get<Asset[]>('/api/assets/list', {
+        // 使用正确的 API 路径
+        const response = await axios.get<Asset[]>('/api/v1/assets/list', {
           headers: { Authorization: `Bearer ${authStore.token}` },
         });
 
-        // 如果后端返回 { code: 0, data: [...] } 结构，改为 this.assets = response.data.data;
         this.assets = response.data;
       } catch (err: any) {
         console.error('获取资产失败:', err);

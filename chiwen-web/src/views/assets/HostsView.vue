@@ -9,15 +9,42 @@
         style="width: 100%"
       >
         <el-table-column
-          prop="id"
-          label="ID"
-          width="80"
-        />
-        <el-table-column
           prop="hostname"
-          label="主机名"
+          label="名称"
           width="150"
         />
+        <el-table-column
+          label="IP"
+          width="120"
+        >
+          <template #default="{ row }">
+            <span>{{ extractIP(row.static_info) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="账号"
+          width="100"
+        >
+          <template #default="{ row }">
+            <span>{{ extractAccount(row) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="配置信息"
+          width="150"
+        >
+          <template #default="{ row }">
+            <span>{{ extractConfig(row.static_info) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="系统"
+          width="120"
+        >
+          <template #default="{ row }">
+            <span>{{ extractOS(row.static_info) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="status"
           label="状态"
@@ -25,69 +52,26 @@
         >
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
-              {{ row.status }}
+              {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column
-          prop="created_at"
-          label="创建时间"
-          width="180"
-        />
-        <el-table-column
-          prop="updated_at"
-          label="更新时间"
-          width="180"
-        />
-        <el-table-column
-          prop="labels"
-          label="标签"
+          label="备注"
           width="150"
         >
           <template #default="{ row }">
-            <span v-if="row.labels">{{ formatJson(row.labels) }}</span>
-            <span v-else>-</span>
+            <span>{{ extractRemark(row.labels) }}</span>
           </template>
         </el-table-column>
         <el-table-column
-          prop="allowed_users"
-          label="允许用户"
+          label="操作"
           width="150"
+          fixed="right"
         >
           <template #default="{ row }">
-            <span v-if="row.allowed_users && row.allowed_users.length > 0">{{ row.allowed_users.join(', ') }}</span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="static_info"
-          label="静态信息"
-          width="150"
-        >
-          <template #default="{ row }">
-            <span v-if="row.static_info">{{ formatJson(row.static_info) }}</span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="dynamic_info"
-          label="动态信息"
-          width="150"
-        >
-          <template #default="{ row }">
-            <span v-if="row.dynamic_info">{{ formatJson(row.dynamic_info) }}</span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="is_deleted"
-          label="已删除"
-          width="100"
-        >
-          <template #default="{ row }">
-            <el-tag :type="row.is_deleted ? 'danger' : 'success'">
-              {{ row.is_deleted ? '是' : '否' }}
-            </el-tag>
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -98,7 +82,7 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue';
 import { useAssetsStore } from '@/stores/assets';
-import { ElCard, ElTable, ElTableColumn, ElTag, ElMessage } from 'element-plus';
+import { ElCard, ElTable, ElTableColumn, ElTag, ElMessage, ElMessageBox } from 'element-plus';
 
 const assetsStore = useAssetsStore();
 const loading = ref(false);
@@ -116,6 +100,202 @@ const getStatusType = (status) => {
     default:
       return 'info';
   }
+};
+
+const getStatusText = (status) => {
+  switch (status) {
+    case 'online':
+      return '在线';
+    case 'offline':
+      return '离线';
+    case 'maintenance':
+      return '维护中';
+    default:
+      return status;
+  }
+};
+
+const extractIP = (staticInfo) => {
+  if (!staticInfo) return '-';
+  
+  try {
+    const info = typeof staticInfo === 'string' ? JSON.parse(staticInfo) : staticInfo;
+    
+    // 尝试从网络接口中提取IP
+    if (info.network && info.network.interfaces) {
+      const interfaces = info.network.interfaces;
+      // 优先查找eth0或en0等主要接口
+      const primaryInterface = interfaces.find((iface) => 
+        iface.name && (iface.name.includes('eth') || iface.name.includes('en') || iface.name.includes('wlan'))
+      );
+      if (primaryInterface && primaryInterface.addresses && primaryInterface.addresses.length > 0) {
+        // 优先返回IPv4地址
+        const ipv4 = primaryInterface.addresses.find(addr => addr.family === 'IPv4');
+        if (ipv4) return ipv4.address;
+        // 如果没有IPv4，返回第一个地址
+        return primaryInterface.addresses[0].address;
+      }
+    }
+    
+    // 如果网络接口中没有找到，尝试其他字段
+    if (info.ip) return info.ip;
+    if (info.ip_address) return info.ip_address;
+    if (info.host_ip) return info.host_ip;
+    
+    return '-';
+  } catch (error) {
+    console.error('解析static_info失败:', error);
+    return '-';
+  }
+};
+
+const extractAccount = (row) => {
+  if (!row) return '-';
+  
+  // 尝试从allowed_users中提取第一个用户
+  if (row.allowed_users && Array.isArray(row.allowed_users) && row.allowed_users.length > 0) {
+    return row.allowed_users[0];
+  }
+  
+  // 如果allowed_users是字符串，尝试解析
+  if (row.allowed_users && typeof row.allowed_users === 'string') {
+    try {
+      const users = JSON.parse(row.allowed_users);
+      if (Array.isArray(users) && users.length > 0) {
+        return users[0];
+      }
+    } catch (error) {
+      console.error('解析allowed_users失败:', error);
+    }
+  }
+  
+  // 默认返回root
+  return 'root';
+};
+
+const extractConfig = (staticInfo) => {
+  if (!staticInfo) return '-';
+  
+  try {
+    const info = typeof staticInfo === 'string' ? JSON.parse(staticInfo) : staticInfo;
+    const parts = [];
+    
+    // 提取CPU信息
+    if (info.cpu) {
+      if (info.cpu.model) {
+        parts.push(info.cpu.model.split('@')[0].trim()); // 只取型号部分
+      } else if (info.cpu.cores) {
+        parts.push(`${info.cpu.cores}核`);
+      }
+    }
+    
+    // 提取内存信息
+    if (info.memory && info.memory.total) {
+      const totalMB = info.memory.total / (1024 * 1024);
+      if (totalMB >= 1024) {
+        parts.push(`${Math.round(totalMB / 1024)}GB`);
+      } else {
+        parts.push(`${Math.round(totalMB)}MB`);
+      }
+    }
+    
+    // 提取磁盘信息
+    if (info.disk && info.disk.total) {
+      const totalGB = info.disk.total / (1024 * 1024 * 1024);
+      parts.push(`${Math.round(totalGB)}GB`);
+    }
+    
+    return parts.length > 0 ? parts.join('/') : '-';
+  } catch (error) {
+    console.error('解析static_info配置失败:', error);
+    return '-';
+  }
+};
+
+const extractOS = (staticInfo) => {
+  if (!staticInfo) return '-';
+  
+  try {
+    const info = typeof staticInfo === 'string' ? JSON.parse(staticInfo) : staticInfo;
+    
+    if (info.os) {
+      if (info.os.name) {
+        let osName = info.os.name;
+        // 简化OS名称
+        if (osName.includes('Ubuntu')) return 'Ubuntu';
+        if (osName.includes('CentOS')) return 'CentOS';
+        if (osName.includes('Debian')) return 'Debian';
+        if (osName.includes('Windows')) return 'Windows';
+        if (osName.includes('macOS')) return 'macOS';
+        if (osName.includes('Linux')) return 'Linux';
+        return osName;
+      }
+    }
+    
+    return '-';
+  } catch (error) {
+    console.error('解析static_info OS失败:', error);
+    return '-';
+  }
+};
+
+const extractRemark = (labels) => {
+  if (!labels) return '-';
+  
+  try {
+    const labelObj = typeof labels === 'string' ? JSON.parse(labels) : labels;
+    
+    if (typeof labelObj === 'object' && labelObj !== null) {
+      // 尝试提取备注字段
+      if (labelObj.remark) return labelObj.remark;
+      if (labelObj.description) return labelObj.description;
+      if (labelObj.note) return labelObj.note;
+      
+      // 如果没有特定字段，返回第一个键值对
+      const keys = Object.keys(labelObj);
+      if (keys.length > 0) {
+        const firstKey = keys[0];
+        const value = labelObj[firstKey];
+        return `${firstKey}: ${value}`;
+      }
+    }
+    
+    return '-';
+  } catch (error) {
+    console.error('解析labels失败:', error);
+    return '-';
+  }
+};
+
+const handleEdit = (row) => {
+  ElMessageBox.alert('编辑功能尚未实现', '提示', {
+    confirmButtonText: '确定',
+    callback: () => {
+      console.log('编辑资产:', row);
+      // TODO: 实现编辑逻辑
+    },
+  });
+};
+
+const handleDelete = (row) => {
+  ElMessageBox.confirm(
+    `确定要删除主机 "${row.hostname}" 吗？此操作不可撤销。`,
+    '确认删除',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+    .then(() => {
+      ElMessage.success('删除成功（演示功能）');
+      console.log('删除资产:', row);
+      // TODO: 实现删除API调用
+      // 在实际应用中，这里应该调用删除API，然后重新加载数据
+    })
+    .catch(() => {
+      // 用户取消
+    });
 };
 
 const formatJson = (obj) => {
