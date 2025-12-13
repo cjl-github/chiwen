@@ -174,7 +174,10 @@ func CollectStaticInfo() map[string]interface{} {
 			}
 		}
 		if len(internalIPs) > 0 {
-			info["internal_ips"] = internalIPs
+			// 按照前端期望的结构存储IP信息
+			info["network"] = map[string]interface{}{
+				"ips": internalIPs,
+			}
 		}
 	}
 

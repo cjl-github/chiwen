@@ -168,7 +168,13 @@ const extractIP = (staticInfo) => {
   try {
     const info = typeof staticInfo === 'string' ? JSON.parse(staticInfo) : staticInfo;
     
-    // 优先使用internal_ips字段（从CollectStaticInfo收集）
+    // 优先使用network.ips字段（从CollectStaticInfo收集的新格式）
+    if (info.network && info.network.ips && Array.isArray(info.network.ips) && info.network.ips.length > 0) {
+      // 返回第一个IP
+      return info.network.ips[0];
+    }
+    
+    // 兼容旧数据：使用internal_ips字段
     if (info.internal_ips && Array.isArray(info.internal_ips) && info.internal_ips.length > 0) {
       // 返回第一个内网IP
       return info.internal_ips[0];
