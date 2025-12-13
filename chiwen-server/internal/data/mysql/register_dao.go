@@ -104,6 +104,20 @@ func CreateAsset(id, hostname, clientPubKey, agentSecretKey string) (*model.Asse
 	// 清理客户端公钥格式
 	cleanPubKey := strings.TrimSpace(clientPubKey)
 
+	// 创建基本的静态信息JSON，包含hostname
+	basicStaticInfo := map[string]interface{}{
+		"hostname": hostname,
+		"os":       "unknown", // 默认值，客户端会在心跳中更新
+	}
+
+	staticInfoJSON, err := json.Marshal(basicStaticInfo)
+	if err != nil {
+		zap.L().Warn("Failed to marshal basic static info, using empty JSON",
+			zap.String("id", id),
+			zap.Error(err))
+		staticInfoJSON = []byte("{}")
+	}
+
 	// 创建空的 JSON 对象
 	emptyJSON := json.RawMessage(`{}`)
 
@@ -119,7 +133,8 @@ func CreateAsset(id, hostname, clientPubKey, agentSecretKey string) (*model.Asse
 			client_public_key = VALUES(client_public_key),
 			status = VALUES(status),
 			updated_at = VALUES(updated_at),
-			agent_secret_key = VALUES(agent_secret_key)
+			agent_secret_key = VALUES(agent_secret_key),
+			static_info = VALUES(static_info)
 	`
 
 	result, err := db.Exec(query,
@@ -128,8 +143,8 @@ func CreateAsset(id, hostname, clientPubKey, agentSecretKey string) (*model.Asse
 		cleanPubKey,
 		emptyJSON, // labels
 		agentSecretKey,
-		emptyJSON, // static_info
-		emptyJSON, // dynamic_info
+		staticInfoJSON, // static_info
+		emptyJSON,      // dynamic_info
 	)
 
 	if err != nil {
@@ -173,23 +188,53 @@ func CreateAsset(id, hostname, clientPubKey, agentSecretKey string) (*model.Asse
 
 // CreateAssetWithAllowedUsers 写入正式资产表，支持自定义 allowed_users
 func CreateAssetWithAllowedUsers(id, hostname, clientPubKey, agentSecretKey, allowedUsersJSON string) error {
+	// 创建基本的静态信息JSON，包含hostname
+	// 这样前端在客户端发送第一次心跳之前就能显示一些基本信息
+	basicStaticInfo := map[string]interface{}{
+		"hostname": hostname,
+		"os":       "unknown", // 默认值，客户端会在心跳中更新
+	}
+
+	staticInfoJSON, err := json.Marshal(basicStaticInfo)
+	if err != nil {
+		zap.L().Warn("Failed to marshal basic static info, using empty JSON",
+			zap.String("id", id),
+			zap.Error(err))
+		staticInfoJSON = []byte("{}")
+	}
+
 	// 使用MySQL的JSON_ARRAY()函数直接构建JSON数组
 	// 注意：allowedUsersJSON应该是"[5]"这样的字符串，我们需要提取数字5
 	// 但我们直接使用MySQL的JSON_ARRAY(5)来确保正确的JSON格式
 	query := `
 		INSERT INTO assets 
 			(id, hostname, client_public_key, labels, allowed_users, status, 
-			 created_at, updated_at, is_deleted, agent_secret_key)
-		VALUES (?, ?, ?, ?, JSON_ARRAY(5), 'online', NOW(), NOW(), 0, ?)
+			 created_at, updated_at, is_deleted, agent_secret_key,
+			 static_info, dynamic_info)
+		VALUES (?, ?, ?, ?, JSON_ARRAY(5), 'online', NOW(), NOW(), 0, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 			hostname = VALUES(hostname),
 			client_public_key = VALUES(client_public_key),
 			allowed_users = VALUES(allowed_users),
 			status = 'online',
 			updated_at = NOW(),
-			agent_secret_key = VALUES(agent_secret_key)
+			agent_secret_key = VALUES(agent_secret_key),
+			static_info = VALUES(static_info)
 	`
-	_, err := db.Exec(query, id, hostname, clientPubKey, `{}`, agentSecretKey)
+	_, err = db.Exec(query, id, hostname, clientPubKey, `{}`, agentSecretKey, staticInfoJSON, `{}`)
+
+	if err != nil {
+		zap.L().Error("Failed to create/update asset with allowed users",
+			zap.String("id", id),
+			zap.String("hostname", hostname),
+			zap.Error(err))
+	} else {
+		zap.L().Info("Asset created/updated with basic static info",
+			zap.String("id", id),
+			zap.String("hostname", hostname),
+			zap.String("static_info", string(staticInfoJSON)))
+	}
+
 	return err
 }
 

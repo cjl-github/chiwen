@@ -111,15 +111,14 @@ func UpdateAssetStaticInfoIfChanged(id string, metrics map[string]interface{}) e
 		return nil // 不返回错误，继续执行
 	}
 
-	// 使用 JSON 比较来检查是否有变化，使用数据库的NOW()函数确保时间一致性
+	// 简化：总是更新静态信息，避免JSON比较的复杂性
 	query := `
 		UPDATE assets 
 		SET static_info = ?, updated_at = NOW() 
-		WHERE id = ? 
-		AND (static_info IS NULL OR JSON_CONTAINS(?, static_info) = 0 OR JSON_CONTAINS(static_info, ?) = 0)
+		WHERE id = ?
 	`
 
-	result, err := db.Exec(query, data, id, data, data)
+	result, err := db.Exec(query, data, id)
 	if err != nil {
 		zap.L().Warn("UpdateAssetStaticInfoIfChanged failed (non-critical)",
 			zap.String("id", id),
@@ -129,7 +128,7 @@ func UpdateAssetStaticInfoIfChanged(id string, metrics map[string]interface{}) e
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected > 0 {
-		zap.L().Debug("Static info updated (changed)",
+		zap.L().Debug("Static info updated",
 			zap.String("id", id),
 			zap.Int64("rows_affected", rowsAffected))
 	}
