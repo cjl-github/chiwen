@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '@/stores/auth'; // 从stores/auth.ts导入
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -19,7 +19,7 @@ const router = createRouter({
       children: [
         // 仪表盘
         {
-          path: '',
+          path: 'dashboard',
           name: 'dashboard',
           component: () => import('@/views/DashboardView.vue'),
           meta: { title: '仪表盘' }
@@ -50,13 +50,19 @@ const router = createRouter({
           component: () => import('@/views/assets/CertView.vue'),
           meta: { title: '证书' }
         },
+        {
+          path: 'assets/assets-list',
+          name: 'assets-list',
+          component: () => import('@/views/assets/AssetsList.vue'),
+          meta: { title: '资产列表' }
+        },
 
         // 其他一级页面
         {
-          path: 'pipelines',
-          name: 'pipelines',
+          path: 'sessions',
+          name: 'sessions',
           component: () => import('@/views/sessions/SessionList.vue'),
-          meta: { title: '流水线系统' }
+          meta: { title: '会话列表' }
         },
         {
           path: 'monitoring',
@@ -85,16 +91,16 @@ const router = createRouter({
       ]
     }
   ]
-})
+});
 
-// 登录守卫（你原来的逻辑，完全保留）
+// 添加全局守卫，确保登陆后访问
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
+  const authStore = useAuthStore();
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
-    next('/login')
+    next('/login');
   } else {
-    next()
+    next();
   }
-})
+});
 
-export default router
+export default router;

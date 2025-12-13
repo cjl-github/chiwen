@@ -1,120 +1,60 @@
-<!-- src/views/assets/HostsView.vue -->
 <template>
-  <div class="hosts-view">
-    <el-row :gutter="20">
-      <el-col :span="6">
-        <!-- 块1: 树形结构 -->
-        <el-tree
-          :data="treeData"
-          :props="defaultProps"
-          @node-click="handleNodeClick"
-        />
-      </el-col>
-      <el-col :span="18">
-        <!-- 块2: 表格 -->
-        <el-input
-          v-model="searchQuery"
-          placeholder="搜索名称或 IP"
-          class="search-input"
-          @input="filterAssets"
-        />
-        <el-table :data="filteredAssets" style="width: 100%">
-          <el-table-column prop="hostname" label="名称" />
-          <el-table-column label="IP">
-            <template #default="{ row }">{{ row.static_info?.ip || 'N/A' }}</template>
-          </el-table-column>
-          <el-table-column label="配置">
-            <template #default="{ row }">{{ row.static_info?.cpu || 'N/A' }} / {{ row.static_info?.memory || 'N/A' }}</template>
-          </el-table-column>
-          <el-table-column label="系统">
-            <template #default="{ row }">{{ row.static_info?.os || 'Unknown' }}</template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" />
-          <el-table-column label="备注">
-            <template #default="{ row }">{{ row.labels?.remark || '无' }}</template>
-          </el-table-column>
-          <el-table-column label="操作">
-            <template #default="{ row }">
-              <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-              <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-col>
-    </el-row>
-
-    <!-- 编辑对话框 (示例，使用 el-dialog) -->
-    <el-dialog v-model="editDialogVisible" title="编辑主机">
-      <el-form :model="editForm">
-        <el-form-item label="名称"><el-input v-model="editForm.hostname" /></el-form-item>
-        <!-- 其他字段... -->
-      </el-form>
-      <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitEdit">保存</el-button>
+  <div class="q-pa-md">
+    <q-table
+      title="主机资产列表"
+      :rows="assets"
+      :columns="columns"
+      row-key="id"
+      :loading="loading"
+      :pagination="{ rowsPerPage: 10 }"
+    >
+      <template v-slot:loading>
+        <q-inner-loading showing color="primary" />
       </template>
-    </el-dialog>
+    </q-table>
   </div>
 </template>
 
-<script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useAssetsStore } from '@/stores/assets';
-import { ElMessageBox, ElRow, ElCol, ElTree, ElInput, ElTable, ElTableColumn, ElButton, ElDialog, ElForm, ElFormItem } from 'element-plus';
+<script setup>
+import { onMounted, ref } from 'vue';
+import { useAssetsStore } from '@/stores/assets'; // 导入store
 
 const assetsStore = useAssetsStore();
-const searchQuery = ref(assetsStore.searchQuery);
-const editDialogVisible = ref(false);
-const editForm = ref({ id: '', hostname: '', /* 其他字段 */ });
+const assets = ref([]);
+const loading = ref(false);
 
-const treeData = computed(() => assetsStore.getTreeData());
-const filteredAssets = computed(() => assetsStore.filteredAssets);
-const defaultProps = { children: 'children', label: 'label' };
+const columns = [
+  { name: 'id', label: 'ID', field: 'id', sortable: true },
+  { name: 'hostname', label: '主机名', field: 'hostname', sortable: true },
+  { name: 'status', label: '状态', field: 'status', sortable: true },
+  { name: 'created_at', label: '创建时间', field: 'created_at', sortable: true },
+  { name: 'updated_at', label: '更新时间', field: 'updated_at', sortable: true },
+  { name: 'labels', label: '标签', field: 'labels', format: val => val ? JSON.stringify(val) : '' },
+  { name: 'allowed_users', label: '允许用户', field: 'allowed_users', format: val => val ? val.join(', ') : '' },
+  { name: 'static_info', label: '静态信息', field: 'static_info', format: val => val ? JSON.stringify(val) : '' },
+  { name: 'dynamic_info', label: '动态信息', field: 'dynamic_info', format: val => val ? JSON.stringify(val) : '' },
+  { name: 'is_deleted', label: '已删除', field: 'is_deleted', format: val => val ? '是' : '否' }
+  // 可以根据需要添加更多列，如client_public_key（但公钥可能敏感，不建议显示完整），agent_secret_key（秘密，不显示）
+];
 
-onMounted(() => {
-  assetsStore.fetchAssets();
-});
-
-const filterAssets = () => {
-  assetsStore.searchQuery = searchQuery.value;
-  assetsStore.filterAssets();
-};
-
-const handleNodeClick = (data: any) => {
-  if (data.label.includes('Linux')) {
-    assetsStore.selectedCategory = 'linux';
-  } else if (data.label.includes('Windows')) {
-    assetsStore.selectedCategory = 'windows';
-  } else {
-    assetsStore.selectedCategory = 'all';
+onMounted(async () => {
+  loading.value = true;
+  try {
+    await assetsStore.fetchAssets(); // 调用store action拉取数据
+    assets.value = assetsStore.assets; // 从store绑定数据
+  } catch (error) {
+    console.error('加载资产数据失败:', error);
+    // 可选：使用Quasar notify显示错误
+    // this.$q.notify({ type: 'negative', message: '加载失败' });
+  } finally {
+    loading.value = false;
   }
-  assetsStore.filterAssets();
-  // 如果是叶子节点，可以进一步处理，如选中具体主机
-};
-
-const handleEdit = (row: any) => {
-  editForm.value = { ...row };
-  editDialogVisible.value = true;
-};
-
-const submitEdit = () => {
-  assetsStore.editAsset(editForm.value.id, editForm.value);
-  editDialogVisible.value = false;
-};
-
-const handleDelete = (row: any) => {
-  ElMessageBox.confirm('确认删除此主机?', '警告', { type: 'warning' })
-    .then(() => assetsStore.deleteAsset(row.id))
-    .catch(() => {});
-};
+});
 </script>
 
 <style scoped>
-.hosts-view {
-  padding: 20px;
-}
-.search-input {
-  margin-bottom: 20px;
-  width: 300px;
+/* 可选样式，例如调整表格宽度或颜色 */
+.q-table {
+  width: 100%;
 }
 </style>
