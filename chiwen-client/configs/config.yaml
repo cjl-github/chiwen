@@ -20,7 +20,7 @@ client:
 # 服务器配置
 server:
     host: "localhost"                   # 服务器主机名或IP地址
-    port: 8091                          # 服务器端口
+    port: 8090                          # 服务器端口
     protocol: "http"                    # 协议：http 或 https
     register_path: "/api/v1/register"   # 注册接口路径
     register_status_path: "/api/v1/register/status"

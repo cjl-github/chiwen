@@ -1,12 +1,12 @@
 app:
   name: "chiwen_server"
   mode: "debug"
-  listen: "8091"
+  listen: "8090"
   aoto_migrate: true
 
 server:
   host: "0.0.0.0"
-  external_url: "http://localhost:8091"
+  external_url: "http://localhost:8090"
 
 log:
   level: "debug"
