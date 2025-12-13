@@ -2,10 +2,10 @@
   <div id="app-layout">
     <!-- 侧边栏 -->
     <aside class="sidebar">
+      <!-- Logo 区域：精确 200 × 40px -->
       <div class="logo">
         <h2>螭吻平台</h2>
       </div>
-
       <nav class="menu">
         <ul>
           <!-- 仪表盘 -->
@@ -15,7 +15,6 @@
               <span>仪表盘</span>
             </router-link>
           </li>
-
           <!-- 资产管理（可展开） -->
           <li class="menu-group">
             <div
@@ -27,7 +26,6 @@
               <span>资产管理</span>
               <DownOutlined class="arrow" />
             </div>
-
             <Transition name="slide">
               <ul v-show="expandedMenus.assets" class="submenu">
                 <li>
@@ -57,7 +55,6 @@
               </ul>
             </Transition>
           </li>
-
           <!-- 其他一级菜单 -->
           <li>
             <router-link to="/pipelines" class="menu-item" active-class="active">
@@ -95,9 +92,10 @@
 
     <!-- 右侧内容区 -->
     <div class="main">
+      <!-- Header 高度改为 40px -->
       <header class="header">
         <h1 class="title">{{ currentTitle }}</h1>
-        <a-button type="primary" danger @click="logout">退出登录</a-button>
+        <a-button type="primary" danger size="small" @click="logout">退出登录</a-button>
       </header>
       <main class="content">
         <router-view />
@@ -134,12 +132,10 @@ const toggleMenu = (key: string) => {
   expandedMenus.value[key] = !expandedMenus.value[key]
 }
 
-// 当前路由是否在资产管理模块下
 const isAssetsActive = computed(() => route.path.startsWith('/assets/'))
 
-// 动态标题
 const currentTitle = computed(() => {
-  const map: Record<string, string> = {
+  const map: Record<string, string>  = {
     '/dashboard': '仪表盘',
     '/assets/hosts': '主机设备',
     '/assets/network': '网络设备',
@@ -151,10 +147,9 @@ const currentTitle = computed(() => {
     '/audit': '审计系统',
     '/admin': '管理系统',
   }
-  return map[route.path] || '迟文系统'
+  return map[route.path] || '螭吻平台'
 })
 
-// 进入资产子页面自动展开
 watch(
   () => route.path,
   (path) => {
@@ -169,18 +164,15 @@ const logout = () => {
 }
 </script>
 
-
-
-
 <style scoped>
 #app-layout {
   height: 100vh;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 200px 1fr;
   overflow: hidden;
 }
 
-/* 侧边栏 */
+/* 侧边栏整体 */
 .sidebar {
   background: #001529;
   color: #fff;
@@ -188,60 +180,70 @@ const logout = () => {
   flex-direction: column;
 }
 
+/* Logo 区域：200 × 40px */
 .logo {
-  height: 64px;
-  background: rgba(255,255,255,0.05);
+  width: 200px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.logo h2 {
+  margin: 0;
+  font-size: 15px;
   font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.5px;
 }
 
-/* 菜单容器 */
+/* 菜单区域 */
+.menu {
+  flex: 1;
+  overflow-y: auto;
+}
 .menu ul {
   list-style: none;
   padding: 8px 0;
   margin: 0;
-  flex: 1;
 }
 
-/* 一级菜单项 + 父菜单标题（完全统一） */
+/* 一级菜单项 */
 .menu-item,
 .menu-title {
   display: flex;
   align-items: center;
-  padding: 13px 24px;                    /* 上下左右内边距一致 */
-  color: rgba(255,255,255,0.65);
-  font-size: 14.5px;                     /* 一二级文字大小完全一致 */
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
   font-weight: 500;
   transition: all 0.3s;
   cursor: pointer;
 }
 .menu-item:hover,
 .menu-title:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
 }
-
-/* 高亮状态：青绿底白字 */
 .menu-item.active,
 .menu-title.active,
 .menu-title.expanded {
   background: #00c4b6;
   color: white;
 }
-
-/* 图标固定宽度，确保文字完全对齐 */
 .icon {
-  font-size: 18px;
-  width: 28px;                 /* 关键！固定宽度，所有图标对齐 */
+  font-size: 17px;
+  width: 26px;
   text-align: center;
-  margin-right: 16px;
+  margin-right: 12px;
   flex-shrink: 0;
 }
-
-/* 箭头 */
 .arrow {
   margin-left: auto;
   font-size: 12px;
@@ -251,22 +253,21 @@ const logout = () => {
   transform: rotate(180deg);
 }
 
-/* 二级菜单：完全和一级菜单对齐 + 同款文字大小 */
+/* 二级菜单 */
 .submenu {
   background: #000c17;
-  padding: 0;
 }
 .submenu a {
   display: flex;
   align-items: center;
-  padding: 13px 24px;                    /* 和一级菜单完全一样的 padding */
-  color: rgba(255,255,255,0.7);
-  font-size: 14.5px;                     /* 文字大小完全一致！ */
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
   transition: all 0.3s;
 }
 .submenu a .icon {
-  margin-right: 16px;
-  width: 28px;
+  margin-right: 12px;
+  width: 26px;
   text-align: center;
 }
 .submenu a:hover,
@@ -275,20 +276,50 @@ const logout = () => {
   color: white;
 }
 
-/* 展开动画 */
+/* 动画 */
 .slide-enter-active,
-.slide-leave-active {
-  transition: all 0.3s ease;
-}
+.slide-leave-active { transition: all 0.3s ease; }
 .slide-enter-from,
-.slide-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
+.slide-leave-to { opacity: 0; transform: translateY(-8px); }
+
+/* 右侧区域 */
+.main { 
+  display: flex; 
+  flex-direction: column; 
+  background: #f0f2f5; 
 }
 
-/* 右侧保持不变 */
-.main { display: flex; flex-direction: column; background: #f0f2f5; }
-.header { height: 64px; background: #fff; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,21,41,.08); }
-.title { margin: 0; font-size: 20px; font-weight: 600; color: #000; }
-.content { flex: 1; padding: 24px 32px; overflow-y: auto; background: #f0f2f5; }
+/* Header 高度改为 40px */
+.header { 
+  height: 40px;                    /* 关键：从 64px → 40px */
+  background: #fff; 
+  padding: 0 24px;                 /* 左右内边距略减小 */
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  box-shadow: 0 1px 4px rgba(0,21,41,.08); 
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.title { 
+  margin: 0; 
+  font-size: 16px;                 /* 文字稍小，与 40px 高度匹配 */
+  font-weight: 600; 
+  color: #000; 
+}
+
+/* 退出按钮适配 40px 高度 */
+.header :deep(.ant-btn) {
+  height: 28px;
+  line-height: 26px;
+  font-size: 13px;
+  padding: 0 12px;
+}
+
+.content { 
+  flex: 1; 
+  padding: 24px 32px; 
+  overflow-y: auto; 
+  background: #f0f2f5; 
+}
 </style>
