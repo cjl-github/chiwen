@@ -142,8 +142,10 @@ func ApproveApply(clientID string) (encryptedSecret string, err error) {
 	}
 	encryptedSecret = base64.StdEncoding.EncodeToString(encryptedBytes)
 
-	// 关键：写入 allowed_users = ["*"]
-	allowedUsersJSON := `["*"]`
+	// 关键：写入 allowed_users = [5] (允许管理员用户访问)
+	// 注意：MySQL函数索引 cast(allowed_users as unsigned array) 要求数字数组，不能是字符串数组
+	// 注意：users表中admin用户的ID是5，不是1
+	allowedUsersJSON := `[5]`
 
 	// 修复：只接收 error
 	err = mysql.CreateAssetWithAllowedUsers(apply.ID, apply.Hostname, apply.ClientPubKey, secretStr, allowedUsersJSON)
@@ -156,6 +158,6 @@ func ApproveApply(clientID string) (encryptedSecret string, err error) {
 		return "", err
 	}
 
-	zap.L().Info("审批成功，已写入默认权限 allowed_users=[\"*\"]", zap.String("asset_id", apply.ID))
+	zap.L().Info("审批成功，已写入默认权限 allowed_users=[5]", zap.String("asset_id", apply.ID))
 	return encryptedSecret, nil
 }

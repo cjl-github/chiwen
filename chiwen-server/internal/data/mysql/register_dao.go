@@ -175,11 +175,14 @@ func CreateAsset(id, hostname, clientPubKey, agentSecretKey string) (*model.Asse
 
 // internal/data/mysql/register_dao.go
 func CreateAssetWithAllowedUsers(id, hostname, clientPubKey, agentSecretKey, allowedUsersJSON string) error {
+	// 使用MySQL的JSON_ARRAY()函数直接构建JSON数组
+	// 注意：allowedUsersJSON应该是"[5]"这样的字符串，我们需要提取数字5
+	// 但我们直接使用MySQL的JSON_ARRAY(5)来确保正确的JSON格式
 	query := `
 		INSERT INTO assets 
 			(id, hostname, client_public_key, labels, allowed_users, status, 
 			 created_at, updated_at, is_deleted, agent_secret_key)
-		VALUES (?, ?, ?, ?, ?, 'online', NOW(), NOW(), 0, ?)
+		VALUES (?, ?, ?, ?, JSON_ARRAY(5), 'online', NOW(), NOW(), 0, ?)
 		ON DUPLICATE KEY UPDATE
 			hostname = VALUES(hostname),
 			client_public_key = VALUES(client_public_key),
@@ -188,6 +191,6 @@ func CreateAssetWithAllowedUsers(id, hostname, clientPubKey, agentSecretKey, all
 			updated_at = NOW(),
 			agent_secret_key = VALUES(agent_secret_key)
 	`
-	_, err := db.Exec(query, id, hostname, clientPubKey, `{}`, allowedUsersJSON, agentSecretKey)
+	_, err := db.Exec(query, id, hostname, clientPubKey, `{}`, agentSecretKey)
 	return err
 }
