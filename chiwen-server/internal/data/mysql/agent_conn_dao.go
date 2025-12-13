@@ -25,13 +25,13 @@ func UpdateAgentPing(assetID string) error {
 	return err
 }
 
-// MarkAssetOfflineIfNoPing 后台任务用：超过60秒没心跳就下线
+// MarkAssetOfflineIfNoPing 后台任务用：超过30秒没心跳就下线
 func MarkAssetOfflineIfNoPing() (int64, error) {
 	result, err := db.Exec(`
 		UPDATE assets a
 		JOIN agent_connections ac ON a.id = ac.asset_id
 		SET a.status = 'offline', a.updated_at = NOW()
-		WHERE ac.last_ping_at < DATE_SUB(NOW(), INTERVAL 60 SECOND)
+		WHERE ac.last_ping_at < DATE_SUB(NOW(), INTERVAL 30 SECOND)
 		  AND a.status = 'online'
 	`)
 	if err != nil {

@@ -29,5 +29,5 @@ func StartBackgroundTasks() {
 		}
 	}()
 
-	zap.L().Info("background tasks started (offline detector every 1 minute)")
+	zap.L().Info("background tasks started (offline detector every 30 seconds)")
 }

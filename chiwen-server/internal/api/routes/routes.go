@@ -86,6 +86,13 @@ func Setup() *gin.Engine {
 			assetsGroup.DELETE("/:id", handler.DeleteAssetHandler)
 			assetsGroup.PUT("/:id/labels", handler.UpdateAssetLabelsHandler)
 		}
+
+		// 注册审批相关（需要管理员权限）
+		registerGroup := authGroup.Group("/register")
+		{
+			registerGroup.GET("/pending", handler.PendingAppliesHandler)
+			registerGroup.POST("/reject", handler.RejectApplyHandler)
+		}
 	}
 
 	// ==================== Agent 长连接（不需要用户登录） ====================

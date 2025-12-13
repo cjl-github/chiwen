@@ -172,8 +172,6 @@ func CreateAsset(id, hostname, clientPubKey, agentSecretKey string) (*model.Asse
 // ... 其他代码不变 ...
 
 // CreateAssetWithAllowedUsers 写入正式资产表，支持自定义 allowed_users
-
-// internal/data/mysql/register_dao.go
 func CreateAssetWithAllowedUsers(id, hostname, clientPubKey, agentSecretKey, allowedUsersJSON string) error {
 	// 使用MySQL的JSON_ARRAY()函数直接构建JSON数组
 	// 注意：allowedUsersJSON应该是"[5]"这样的字符串，我们需要提取数字5
@@ -193,4 +191,19 @@ func CreateAssetWithAllowedUsers(id, hostname, clientPubKey, agentSecretKey, all
 	`
 	_, err := db.Exec(query, id, hostname, clientPubKey, `{}`, agentSecretKey)
 	return err
+}
+
+// GetPendingApplies 获取所有待审批的申请
+func GetPendingApplies() ([]model.AgentRegisterApply, error) {
+	var applies []model.AgentRegisterApply
+	query := `SELECT id, nonce, hostname, apply_status, created_at, client_public_key 
+	          FROM agent_register_apply 
+	          WHERE apply_status = 'pending' 
+	          ORDER BY created_at DESC`
+
+	err := db.Select(&applies, query)
+	if err != nil {
+		return nil, err
+	}
+	return applies, nil
 }

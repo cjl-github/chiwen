@@ -29,6 +29,12 @@
             <Transition name="slide">
               <ul v-show="expandedMenus.assets" class="submenu">
                 <li>
+                  <router-link to="/assets/register-approval" active-class="active">
+                    <el-icon class="icon"><Document /></el-icon>
+                    <span>审批设备</span>
+                  </router-link>
+                </li>
+                <li>
                   <router-link to="/assets/hosts" active-class="active">
                     <el-icon class="icon"><Monitor /></el-icon>
                     <span>主机设备</span>
@@ -83,7 +89,7 @@
           <li>
             <router-link to="/admin" class="menu-item" active-class="active">
               <el-icon class="icon"><Setting /></el-icon>
-              <span>管理系统</span>
+              <span>管理系统（正在开发中）</span>
             </router-link>
           </li>
         </ul>
@@ -138,6 +144,7 @@ const isAssetsActive = computed(() => route.path.startsWith('/assets/'))
 const currentTitle = computed(() => {
   const map: Record<string, string>  = {
     '/dashboard': '仪表盘',
+    '/assets/register-approval': '审批设备',
     '/assets/hosts': '主机设备',
     '/assets/network': '网络设备',
     '/assets/database': '数据库',
@@ -146,7 +153,7 @@ const currentTitle = computed(() => {
     '/monitoring': '监控系统',
     '/logs': '日志系统',
     '/audit': '审计系统',
-    '/admin': '管理系统',
+    '/admin': '管理系统（正在开发中）',
   }
   return map[route.path] || '螭吻平台'
 })

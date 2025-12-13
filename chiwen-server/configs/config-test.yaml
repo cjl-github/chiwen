@@ -16,7 +16,7 @@ log:
   max_backups: 3
 
 mysql:
-  host: "192.168.19.100"
+  host: "192.168.19.100"  # MySQL服务器地址（根据实际部署环境修改）
   port: 3306
   user: "myuser"
   password: "MyUserP@ss123"

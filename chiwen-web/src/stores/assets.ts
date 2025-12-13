@@ -24,7 +24,7 @@ export const useAssetsStore = defineStore('assets', {
     error: null as string | null,
   }),
   getters: {
-    onlineAssets: (state) => state.assets.filter((a) => a.status === 'online'),
+    onlineAssets: (state) => state.assets.filter((a) => a.Status === 'online'),
   },
   actions: {
     async fetchAssets() {
@@ -94,7 +94,7 @@ export const useAssetsStore = defineStore('assets', {
         
         // 更新本地状态
         const assetIndex = this.assets.findIndex(asset => asset.ID === assetId);
-        if (assetIndex !== -1) {
+        if (assetIndex !== -1 && this.assets[assetIndex]) {
           this.assets[assetIndex].Labels = JSON.stringify(labels);
         }
         

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/chiwen/server/internal/data/model"
 	"go.uber.org/zap"
@@ -79,9 +78,9 @@ func UpdateAssetDynamicInfo(id string, metrics map[string]interface{}) error {
 		return fmt.Errorf("marshal dynamic_info failed: %w", err)
 	}
 
-	// 将 JSON 字符串作为参数传递
-	query := `UPDATE assets SET dynamic_info = ?, updated_at = ? WHERE id = ?`
-	_, err = db.Exec(query, data, time.Now(), id)
+	// 使用数据库的NOW()函数确保时间一致性
+	query := `UPDATE assets SET dynamic_info = ?, updated_at = NOW() WHERE id = ?`
+	_, err = db.Exec(query, data, id)
 	if err != nil {
 		zap.L().Error("UpdateAssetDynamicInfo failed",
 			zap.String("id", id),
@@ -112,15 +111,15 @@ func UpdateAssetStaticInfoIfChanged(id string, metrics map[string]interface{}) e
 		return nil // 不返回错误，继续执行
 	}
 
-	// 使用 JSON 比较来检查是否有变化
+	// 使用 JSON 比较来检查是否有变化，使用数据库的NOW()函数确保时间一致性
 	query := `
 		UPDATE assets 
-		SET static_info = ?, updated_at = ? 
+		SET static_info = ?, updated_at = NOW() 
 		WHERE id = ? 
 		AND (static_info IS NULL OR JSON_CONTAINS(?, static_info) = 0 OR JSON_CONTAINS(static_info, ?) = 0)
 	`
 
-	result, err := db.Exec(query, data, time.Now(), id, data, data)
+	result, err := db.Exec(query, data, id, data, data)
 	if err != nil {
 		zap.L().Warn("UpdateAssetStaticInfoIfChanged failed (non-critical)",
 			zap.String("id", id),
@@ -140,8 +139,9 @@ func UpdateAssetStaticInfoIfChanged(id string, metrics map[string]interface{}) e
 
 // UpdateAssetHeartbeat 心跳成功时更新时间和状态
 func UpdateAssetHeartbeat(id string) error {
-	query := `UPDATE assets SET status = 'online', updated_at = ? WHERE id = ?`
-	result, err := db.Exec(query, time.Now(), id)
+	// 使用NOW()确保数据库服务器时间一致，避免时区问题
+	query := `UPDATE assets SET status = 'online', updated_at = NOW() WHERE id = ?`
+	result, err := db.Exec(query, id)
 	if err != nil {
 		zap.L().Error("UpdateAssetHeartbeat failed",
 			zap.String("id", id),

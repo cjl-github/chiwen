@@ -50,6 +50,7 @@ func AgentWebSocketHandler(c *gin.Context) {
 	defer func() {
 		delete(agent.AgentConns, assetID)
 		mysql.UpdateAssetStatus(assetID, "offline")
+		mysql.RemoveAgentConnection(assetID)
 		conn.Close()
 		zap.L().Info("Agent 已断开", zap.String("asset_id", assetID))
 	}()

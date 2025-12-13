@@ -168,7 +168,13 @@ const extractIP = (staticInfo) => {
   try {
     const info = typeof staticInfo === 'string' ? JSON.parse(staticInfo) : staticInfo;
     
-    // 尝试从网络接口中提取IP
+    // 优先使用internal_ips字段（从CollectStaticInfo收集）
+    if (info.internal_ips && Array.isArray(info.internal_ips) && info.internal_ips.length > 0) {
+      // 返回第一个内网IP
+      return info.internal_ips[0];
+    }
+    
+    // 尝试从网络接口中提取IP（兼容旧数据）
     if (info.network && info.network.interfaces) {
       const interfaces = info.network.interfaces;
       // 优先查找eth0或en0等主要接口
@@ -220,6 +226,13 @@ const extractConfig = (staticInfo) => {
   
   try {
     const info = typeof staticInfo === 'string' ? JSON.parse(staticInfo) : staticInfo;
+    
+    // 优先使用config字段（从CollectStaticInfo收集，格式为"cpu:Xc mem:Yg"）
+    if (info.config) {
+      return info.config;
+    }
+    
+    // 兼容旧数据：如果没有config字段，尝试从其他字段提取
     const parts = [];
     
     // 提取CPU信息
@@ -260,6 +273,20 @@ const extractOS = (staticInfo) => {
   try {
     const info = typeof staticInfo === 'string' ? JSON.parse(staticInfo) : staticInfo;
     
+    // 优先使用os_detail字段（从CollectStaticInfo收集）
+    if (info.os_detail) {
+      let osDetail = info.os_detail;
+      // 简化OS名称
+      if (osDetail.includes('Ubuntu')) return 'Ubuntu';
+      if (osDetail.includes('CentOS')) return 'CentOS';
+      if (osDetail.includes('Debian')) return 'Debian';
+      if (osDetail.includes('Windows')) return 'Windows';
+      if (osDetail.includes('macOS')) return 'macOS';
+      if (osDetail.includes('Linux')) return 'Linux';
+      return osDetail;
+    }
+    
+    // 兼容旧数据
     if (info.os) {
       if (info.os.name) {
         let osName = info.os.name;
@@ -288,15 +315,31 @@ const extractRemark = (labels) => {
     const labelObj = typeof labels === 'string' ? JSON.parse(labels) : labels;
     
     if (typeof labelObj === 'object' && labelObj !== null) {
-      // 尝试提取备注字段
-      if (labelObj.remark) return labelObj.remark;
-      if (labelObj.description) return labelObj.description;
-      if (labelObj.note) return labelObj.note;
-      
-      // 如果没有特定字段，返回第一个键值对
+      // 检查是否是空对象或默认值
       const keys = Object.keys(labelObj);
-      if (keys.length > 0) {
-        const firstKey = keys[0];
+      if (keys.length === 0) {
+        return '-'; // 空对象不显示
+      }
+      
+      // 检查是否是默认的String: {}格式
+      if (keys.length === 1 && keys[0] === 'String' && labelObj[String] === '{}') {
+        return '-'; // 默认格式不显示
+      }
+      
+      // 尝试提取备注字段
+      if (labelObj.remark && labelObj.remark.trim() !== '') return labelObj.remark;
+      if (labelObj.description && labelObj.description.trim() !== '') return labelObj.description;
+      if (labelObj.note && labelObj.note.trim() !== '') return labelObj.note;
+      
+      // 如果没有特定字段，检查是否有实际内容
+      // 过滤掉空值或默认值
+      const nonEmptyKeys = keys.filter(key => {
+        const value = labelObj[key];
+        return value !== null && value !== undefined && value !== '' && value !== '{}';
+      });
+      
+      if (nonEmptyKeys.length > 0) {
+        const firstKey = nonEmptyKeys[0];
         const value = labelObj[firstKey];
         return `${firstKey}: ${value}`;
       }

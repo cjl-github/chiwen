@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const OfflineThreshold = 1 * time.Minute // 改为1分钟
+const OfflineThreshold = 60 * time.Second // 增加为60秒，避免频繁状态切换
 
 func OfflineDetector() {
 	cutoff := time.Now().Add(-OfflineThreshold)

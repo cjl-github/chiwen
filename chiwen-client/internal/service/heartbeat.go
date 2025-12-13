@@ -9,9 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/chiwen/client/internal/api/mode"
@@ -161,9 +163,54 @@ func CollectStaticInfo() map[string]interface{} {
 	info["os"] = runtime.GOOS
 	info["cpu_count"] = runtime.NumCPU()
 
+	// 获取内网IP
+	if addrs, err := net.InterfaceAddrs(); err == nil {
+		var internalIPs []string
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					internalIPs = append(internalIPs, ipnet.IP.String())
+				}
+			}
+		}
+		if len(internalIPs) > 0 {
+			info["internal_ips"] = internalIPs
+		}
+	}
+
+	// 获取系统详细信息（如ubuntu或centos）
+	if runtime.GOOS == "linux" {
+		// 尝试读取/etc/os-release文件
+		if data, err := os.ReadFile("/etc/os-release"); err == nil {
+			lines := strings.Split(string(data), "\n")
+			for _, line := range lines {
+				if strings.HasPrefix(line, "PRETTY_NAME=") {
+					info["os_detail"] = strings.Trim(strings.TrimPrefix(line, "PRETTY_NAME="), "\"")
+					break
+				} else if strings.HasPrefix(line, "NAME=") && info["os_detail"] == "" {
+					info["os_detail"] = strings.Trim(strings.TrimPrefix(line, "NAME="), "\"")
+				}
+			}
+		}
+	} else if runtime.GOOS == "darwin" {
+		info["os_detail"] = "macOS"
+	} else if runtime.GOOS == "windows" {
+		info["os_detail"] = "Windows"
+	}
+
+	// 格式化配置信息为易读格式（cpu:8c mem:2g）
+	cpuCount := runtime.NumCPU()
+	if vm, err := mem.VirtualMemory(); err == nil {
+		memGB := vm.Total / (1024 * 1024 * 1024) // 转换为GB
+		info["config"] = fmt.Sprintf("cpu:%dc mem:%dg", cpuCount, memGB)
+	} else {
+		info["config"] = fmt.Sprintf("cpu:%dc", cpuCount)
+	}
+
 	// 内存和磁盘等用 gopsutil 获取更准确信息
 	if vm, err := mem.VirtualMemory(); err == nil {
 		info["total_memory_bytes"] = vm.Total
+		info["total_memory_gb"] = vm.Total / (1024 * 1024 * 1024)
 	}
 	if parts, err := disk.Partitions(true); err == nil {
 		disks := []map[string]interface{}{}
@@ -177,6 +224,7 @@ func CollectStaticInfo() map[string]interface{} {
 			if usage, err := disk.Usage(p.Mountpoint); err == nil {
 				di["total_bytes"] = usage.Total
 				di["free_bytes"] = usage.Free
+				di["total_gb"] = usage.Total / (1024 * 1024 * 1024)
 			}
 			disks = append(disks, di)
 		}

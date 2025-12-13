@@ -89,6 +89,12 @@ const router = createRouter({
           meta: { title: '审计系统' }
         },
         {
+          path: 'assets/register-approval',
+          name: 'register-approval',
+          component: () => import('@/views/assets/DeviceApprovalView.vue'),
+          meta: { title: '设备审批' }
+        },
+        {
           path: 'admin',
           name: 'admin',
           component: () => import('@/views/admin/AdminView.vue'),
