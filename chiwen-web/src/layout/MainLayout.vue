@@ -89,7 +89,7 @@
           <li>
             <router-link to="/admin" class="menu-item" active-class="active">
               <el-icon class="icon"><Setting /></el-icon>
-              <span>管理系统（正在开发中）</span>
+              <span>管理系统</span>
             </router-link>
           </li>
         </ul>

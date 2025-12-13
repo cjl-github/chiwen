@@ -120,6 +120,11 @@ const router = createRouter({
       path: '/assets/cert',
       redirect: '/dashboard/assets/cert'
     },
+    // === 新增：兼容 /assets/register-approval 直接访问 ===
+    {
+      path: '/assets/register-approval',
+      redirect: '/dashboard/assets/register-approval'
+    },
     {
       path: '/pipelines',
       redirect: '/dashboard/pipelines'
