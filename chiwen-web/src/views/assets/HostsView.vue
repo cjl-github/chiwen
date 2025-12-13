@@ -9,7 +9,7 @@
         style="width: 100%"
       >
         <el-table-column
-          prop="hostname"
+          prop="Hostname"
           label="名称"
           width="150"
         />
@@ -18,7 +18,7 @@
           width="120"
         >
           <template #default="{ row }">
-            <span>{{ extractIP(row.static_info) }}</span>
+            <span>{{ extractIP(row.StaticInfo) }}</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -34,7 +34,7 @@
           width="150"
         >
           <template #default="{ row }">
-            <span>{{ extractConfig(row.static_info) }}</span>
+            <span>{{ extractConfig(row.StaticInfo) }}</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -42,17 +42,17 @@
           width="120"
         >
           <template #default="{ row }">
-            <span>{{ extractOS(row.static_info) }}</span>
+            <span>{{ extractOS(row.StaticInfo) }}</span>
           </template>
         </el-table-column>
         <el-table-column
-          prop="status"
+          prop="Status"
           label="状态"
           width="100"
         >
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">
-              {{ getStatusText(row.status) }}
+            <el-tag :type="getStatusType(row.Status)">
+              {{ getStatusText(row.Status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -61,7 +61,7 @@
           width="150"
         >
           <template #default="{ row }">
-            <span>{{ extractRemark(row.labels) }}</span>
+            <span>{{ extractRemark(row.Labels) }}</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -76,18 +76,65 @@
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 编辑对话框 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      title="编辑备注"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="备注">
+          <el-input
+            v-model="editForm.remark"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入备注信息"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="editDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveEdit" :loading="saving">保存</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, reactive } from 'vue';
 import { useAssetsStore } from '@/stores/assets';
-import { ElCard, ElTable, ElTableColumn, ElTag, ElMessage, ElMessageBox } from 'element-plus';
+import { 
+  ElCard, 
+  ElTable, 
+  ElTableColumn, 
+  ElTag, 
+  ElMessage, 
+  ElMessageBox,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton
+} from 'element-plus';
 
 const assetsStore = useAssetsStore();
 const loading = ref(false);
+const editDialogVisible = ref(false);
+const saving = ref(false);
+const currentAssetId = ref('');
 
 const assets = computed(() => assetsStore.assets);
+
+// 编辑表单
+const editForm = reactive({
+  remark: ''
+});
 
 const getStatusType = (status) => {
   switch (status) {
@@ -152,20 +199,15 @@ const extractIP = (staticInfo) => {
 const extractAccount = (row) => {
   if (!row) return '-';
   
-  // 尝试从allowed_users中提取第一个用户
-  if (row.allowed_users && Array.isArray(row.allowed_users) && row.allowed_users.length > 0) {
-    return row.allowed_users[0];
-  }
-  
-  // 如果allowed_users是字符串，尝试解析
-  if (row.allowed_users && typeof row.allowed_users === 'string') {
+  // 尝试从AllowedUsers中提取第一个用户
+  if (row.AllowedUsers && typeof row.AllowedUsers === 'string') {
     try {
-      const users = JSON.parse(row.allowed_users);
+      const users = JSON.parse(row.AllowedUsers);
       if (Array.isArray(users) && users.length > 0) {
         return users[0];
       }
     } catch (error) {
-      console.error('解析allowed_users失败:', error);
+      console.error('解析AllowedUsers失败:', error);
     }
   }
   
@@ -268,34 +310,73 @@ const extractRemark = (labels) => {
 };
 
 const handleEdit = (row) => {
-  ElMessageBox.alert('编辑功能尚未实现', '提示', {
-    confirmButtonText: '确定',
-    callback: () => {
-      console.log('编辑资产:', row);
-      // TODO: 实现编辑逻辑
-    },
-  });
+  currentAssetId.value = row.ID;
+  
+  // 解析现有的labels，提取remark
+  let existingRemark = '';
+  if (row.Labels) {
+    try {
+      const labels = typeof row.Labels === 'string' ? JSON.parse(row.Labels) : row.Labels;
+      if (labels && typeof labels === 'object') {
+        existingRemark = labels.remark || labels.description || labels.note || '';
+      }
+    } catch (error) {
+      console.error('解析labels失败:', error);
+    }
+  }
+  
+  editForm.remark = existingRemark;
+  editDialogVisible.value = true;
 };
 
-const handleDelete = (row) => {
-  ElMessageBox.confirm(
-    `确定要删除主机 "${row.hostname}" 吗？此操作不可撤销。`,
-    '确认删除',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
+const saveEdit = async () => {
+  if (!currentAssetId.value) return;
+  
+  saving.value = true;
+  try {
+    // 创建labels对象，包含remark字段
+    const labels = {
+      remark: editForm.remark.trim(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    const success = await assetsStore.updateAssetLabels(currentAssetId.value, labels);
+    if (success) {
+      ElMessage.success('备注更新成功');
+      editDialogVisible.value = false;
+    } else {
+      ElMessage.error('更新失败: ' + (assetsStore.error || '未知错误'));
     }
-  )
-    .then(() => {
-      ElMessage.success('删除成功（演示功能）');
-      console.log('删除资产:', row);
-      // TODO: 实现删除API调用
-      // 在实际应用中，这里应该调用删除API，然后重新加载数据
-    })
-    .catch(() => {
-      // 用户取消
-    });
+  } catch (error) {
+    console.error('保存备注失败:', error);
+    ElMessage.error('保存失败');
+  } finally {
+    saving.value = false;
+  }
+};
+
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除主机 "${row.Hostname}" 吗？此操作不可撤销。`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    
+    const success = await assetsStore.deleteAsset(row.ID);
+    if (success) {
+      ElMessage.success('删除成功');
+    } else {
+      ElMessage.error('删除失败: ' + (assetsStore.error || '未知错误'));
+    }
+  } catch (error) {
+    // 用户取消删除
+    console.log('用户取消删除');
+  }
 };
 
 const formatJson = (obj) => {

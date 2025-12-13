@@ -83,6 +83,8 @@ func Setup() *gin.Engine {
 		{
 			assetsGroup.GET("/list", handler.AssetsListHandler)
 			assetsGroup.GET("/:id/tty/authorize", ttyHandler.AuthorizeTTY)
+			assetsGroup.DELETE("/:id", handler.DeleteAssetHandler)
+			assetsGroup.PUT("/:id/labels", handler.UpdateAssetLabelsHandler)
 		}
 	}
 
